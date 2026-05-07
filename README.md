@@ -1,64 +1,57 @@
-# Goodbye Chat
+# Snapshit
 
-A privacy-first Snapchat archive viewer. Import your Snapchat data, explore your memories, get AI-powered insights, and export to Immich.
+# Why
+Snapchat today is not what it used to be. I am not what I used to be either. When I was 12 I though snapchat was great.
 
-> "Say goodbye and archive a digital chapter in your life."
+I took a lot of photos, made a lot of memories, talked with a lot of people, fell in love, fell out of love, made friends, made stupid faces. 
 
-## Features
+Now it is 13 years later and want to get off the app, but keep my life memories. How can I even do that? Thankfully I remember GDPR! If I ask Snapchat they will have to give me my data! And they did.
+Thanks Snapchat.
 
-- **Import**: Drag-and-drop your Snapchat Takeout archive
-- **Local-first**: All processing happens in your browser—no data sent to servers
-- **No login**: No account required, no tracking
-- **Memories explorer**: Filter by type, friend, year, saved status
-- **AI insights**: Pattern matching and heuristics to highlight meaningful moments
-- **Export ready**: Prepare your archive for Immich or download as JSON
-- **Open source**: Auditable, privacy-first design
+# How to use
 
-## Setup
+1. Request zip files from Snapchat page [My Data](https://accounts.snapchat.com/v2/download-my-data)
+2. Wait...
+3. Download zip files from the email Snapchat sends you.
+4. Navigate to insertdomainnamehere.com
+5. Upload zip(locally, i.e. stays in your browser).
+6. Reminisce.
+7. Export
+8. Move on!
 
-```bash
-# Install dependencies
-npm install
+# Features
 
-# Start development server
-npm run dev
+## Data Analysis
+snapchat-archive supports a modular and extensible way to analyse your snapchat archive in any way you want.
 
-# Build for production
-npm run build
-```
+### Quantitative Analysis
+1. Words: how many words? to who? what words? give me some graphs.
+2. AI: Can I get an AI to talk like I used to talk on snapchat to my friends back in 2012? (Local LLM support coming)
 
-## Routes
+### Chats
+You would think being a chat based social media platform that they would know how to make one for their data review page. No, so this point is simply to do their job for them. AND, I want to see the pictures that were sent in the chat, with the chat.
 
-| Path | Description |
-|------|-------------|
-| `/` | Landing page with trust signals and how it works |
-| `/import` | Drag-and-drop archive import |
-| `/processing` | Local processing progress indicator |
-| `/dashboard` | Archive stats, timeline, highlights |
-| `/memories` | Browse and filter memories |
-| `/summary` | AI-powered insights (with consent) |
-| `/export` | Export to Immich or JSON |
-| `/privacy` | Privacy commitment and about |
+### Images and Export
+Photos are the most important part here. If you go to the memories tab of the index.html page that comes with your snapchat export you will see something like this:
 
-## Tech Stack
+Date	Media Type	Location
+2026-03-21 09:12:33 UTC	Image	Latitude, Longitude: 59.91387, 10.75225
+2026-03-22 18:47:05 UTC	Image	Latitude, Longitude: 60.16952, 11.35322
+...
+2026-03-27 02:44:26 UTC	Image	Latitude, Longitude: 61.50010, 23.76030
+2026-03-28 12:10:58 UTC	Image	Latitude, Longitude: 60.25698, 9.21820
 
-- Vue 3 with Composition API
-- TypeScript
-- Vite
-- Vue Router
-- Pinia
+Along with [Download links that no longer work](https://www.youtube.com/watch?v=dQw4w9WgXcQ) after seven days. Even though the photos in question are part of the zip file.
 
-## Privacy
+Snapchat-archive will let you browse ALL your photos in one place.
+Not only memories. The UI should let you filter based on snapchat users, dates, and have a view for only memories.
 
-This is a client-only application. When you import your archive:
+It should also include a Map View. Basic stuff.
 
-1. The file is read using the browser's File API
-2. Data is processed entirely in your browser memory
-3. Nothing is sent to any server
-4. When you close the tab, data is cleared
+The prime focus is filtering and then exporting to other services like Google Photos, Lightroom, and of course Immich. 
 
-AI insights use local heuristics—no external API calls.
 
-## License
+# Technical Challenges
 
-MIT
+1. Linking up photos from the `chat_media` directory of the archive to the metadata in `json/snap_history.json` and `json/chat_history.json`.
+2. Joining chat photos with the text, stickers and drawings on them, as these are stored as separate image files.
