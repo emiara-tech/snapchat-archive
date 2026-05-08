@@ -1,15 +1,15 @@
 # Snapshit
 
 # Why
-Snapchat today is not what it used to be. I am not what I used to be either. When I was 12 I though snapchat was great.
+Snapchat today is not what it used to be. I am not who I used to be either. When I was 12 I though snapchat was great.
 
 I took a lot of photos, made a lot of memories, talked with a lot of people, fell in love, fell out of love, made friends, made stupid faces. 
 
-Now it is 13 years later and want to get off the app, but keep my life memories. How can I even do that? Thankfully I remember GDPR! If I ask Snapchat they will have to give me my data! And they did.
-Thanks Snapchat.
+Now it is 13 years later and want to get off the yellow app, but keep my life memories. How can I even do that? Thankfully I remember GDPR! If I ask Snapchat they will have to give me my data. And they did...
+
+Thanks Snapchat for following GDPR and respecting my data. Now this part is for respecting your life memories.
 
 # How to use
-
 1. Request zip files from Snapchat page [My Data](https://accounts.snapchat.com/v2/download-my-data)
 2. Wait...
 3. Download zip files from the email Snapchat sends you.
