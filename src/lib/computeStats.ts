@@ -1,30 +1,24 @@
 import type {
-  Account,
   Friend,
   SnapHistory,
   ChatHistory,
   StoryHistoryJson,
   ComputedArchiveStats,
   TopFriendEntry,
+  MemoryRecord,
 } from '../types'
 
 export interface ComputeStatsInput {
-  account: Account | null
   friends: Friend[]
   snapHistory: SnapHistory | null
   chatHistory: ChatHistory | null
   storyHistory: StoryHistoryJson | null
+  memories: MemoryRecord[]
+  indexedMediaBytes?: number
 }
 
-/**
- * Pure function — all stat computation lives here.
- * No IO, no zip reads. Takes parsed JSON data, returns computed stats.
- *
- * To change how any metric works, edit this function.
- * To add a new metric, add a field to ComputedArchiveStats and compute it here.
- */
 export function computeStats(input: ComputeStatsInput): ComputedArchiveStats {
-  const { account, friends, snapHistory, chatHistory, storyHistory } = input
+  const { friends, snapHistory, chatHistory, storyHistory, memories, indexedMediaBytes } = input
 
   const totalSnaps = snapHistory
     ? Object.values(snapHistory).reduce((sum, entries) => sum + entries.length, 0)
@@ -35,43 +29,60 @@ export function computeStats(input: ComputeStatsInput): ComputedArchiveStats {
     : 0
 
   const totalStories = storyHistory?.['Your Story Views']?.length ?? 0
-
-  const totalFriends = friends.length
-
-  const accountInfo = account?.['Basic Information']
-  const dateStart = accountInfo?.['Creation Date'] ?? ''
-  const dateEnd = accountInfo?.['Last Active'] ?? ''
-  const totalDays = dateStart && dateEnd ? Math.max(1, dayDiff(dateStart, dateEnd)) : 0
-
-  const bestStreak = chatHistory ? computeBestStreak(chatHistory) : 0
-
-  const topFriends = chatHistory
-    ? computeTopFriends(chatHistory, friends)
-    : []
+  const dateRange = computeDateRange({ snapHistory, chatHistory, storyHistory, memories })
 
   return {
     totalSnaps,
     totalChats,
     totalStories,
-    totalFriends,
-    bestStreak,
-    dateRange: { start: dateStart, end: dateEnd },
-    totalDays,
-    topFriends,
-    totalMediaSize: 'unknown',
+    totalMemories: memories.length,
+    totalFriends: friends.length,
+    longestChatActiveRunDays: chatHistory ? computeLongestChatActiveRun(chatHistory) : 0,
+    dateRange,
+    totalDays: dateRange.start && dateRange.end ? Math.max(1, dayDiff(dateRange.start, dateRange.end)) : 0,
+    topFriends: chatHistory ? computeTopFriends(chatHistory, friends) : [],
+    totalIndexedMediaSize: formatBytes(indexedMediaBytes ?? 0),
   }
 }
 
-// ---------------------------------------------------------------------------
-// Internal helpers — each implements one metric and is easy to swap out
-// ---------------------------------------------------------------------------
+function computeDateRange(input: {
+  snapHistory: SnapHistory | null
+  chatHistory: ChatHistory | null
+  storyHistory: StoryHistoryJson | null
+  memories: MemoryRecord[]
+}): { start: string; end: string } {
+  const days: string[] = []
 
-/**
- * Best streak = the longest consecutive-day run where at least one chat
- * message was sent or received, across ALL conversation threads combined.
- * (A day counts if any conversation had activity.)
- */
-function computeBestStreak(chatHistory: ChatHistory): number {
+  for (const memory of input.memories) {
+    pushISODate(days, memory.date)
+  }
+
+  if (input.chatHistory) {
+    for (const thread of Object.values(input.chatHistory)) {
+      for (const message of thread) {
+        pushISODate(days, message.Created)
+      }
+    }
+  }
+
+  if (input.snapHistory) {
+    for (const thread of Object.values(input.snapHistory)) {
+      for (const snap of thread) {
+        pushISODate(days, snap.Created)
+      }
+    }
+  }
+
+  for (const story of input.storyHistory?.['Your Story Views'] ?? []) {
+    pushISODate(days, story['Story Date'])
+  }
+
+  if (!days.length) return { start: '', end: '' }
+  days.sort()
+  return { start: days[0], end: days[days.length - 1] }
+}
+
+function computeLongestChatActiveRun(chatHistory: ChatHistory): number {
   const allDays = new Set<string>()
 
   for (const thread of Object.values(chatHistory)) {
@@ -103,11 +114,6 @@ function computeBestStreak(chatHistory: ChatHistory): number {
   return best
 }
 
-/**
- * Top friends = sorted by total message count (sent + received) descending.
- * Display name is resolved from the friends list by username.
- * Returns up to 8 entries.
- */
 function computeTopFriends(chatHistory: ChatHistory, friends: Friend[]): TopFriendEntry[] {
   const displayNameByUsername = new Map<string, string>()
   for (const friend of friends) {
@@ -117,21 +123,24 @@ function computeTopFriends(chatHistory: ChatHistory, friends: Friend[]): TopFrie
   const entries: TopFriendEntry[] = []
 
   for (const [conversationKey, thread] of Object.entries(chatHistory)) {
-    // conversation keys are usernames for 1:1 chats; UUIDs for group chats
     const sentMessages = thread.filter((m) => m.IsSender).length
     const receivedMessages = thread.length - sentMessages
-    const totalMessages = thread.length
 
     entries.push({
       username: conversationKey,
       displayName: displayNameByUsername.get(conversationKey) ?? conversationKey,
-      totalMessages,
+      totalMessages: thread.length,
       sentMessages,
       receivedMessages,
     })
   }
 
   return entries.sort((a, b) => b.totalMessages - a.totalMessages).slice(0, 8)
+}
+
+function pushISODate(days: string[], input: string): void {
+  const day = toISODate(input)
+  if (day) days.push(day)
 }
 
 function dayDiff(start: string, end: string): number {
@@ -146,3 +155,12 @@ function toISODate(input: string): string | null {
   if (Number.isNaN(d.getTime())) return null
   return d.toISOString().slice(0, 10)
 }
+
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / 1024 ** exponent
+  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`
+}
+

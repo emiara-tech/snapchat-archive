@@ -43,7 +43,7 @@ async function startImport() {
         <span class="eyebrow">Import your takeout</span>
         <h1>Drop the Snapchat zip and start the goodbye flow.</h1>
         <p class="page-subtitle">
-          This is the entry point for the recap: open the takeout locally, build a private session in the browser, and
+          This opens the takeout locally, detects the export structure, and reads metadata in your browser.
         </p>
       </header>
 
@@ -66,8 +66,8 @@ async function startImport() {
             <h3 class="info-title">What this session is for</h3>
             <ul class="info-list">
               <li>Turn a Snapchat takeout into a readable end-of-era recap.</li>
-              <li>Review photos and saved media without leaving the browser.</li>
-              <li>Package your images and videos for Immich, Google photos, or Apple Photos export.</li>
+              <li>Review Memories metadata without leaving the browser.</li>
+              <li>Export a JSON bundle of parsed metadata and diagnostics.</li>
             </ul>
           </section>
 
@@ -95,8 +95,7 @@ async function startImport() {
       <section class="import-footnote card">
         <div>
           <span class="footnote-label">After import</span>
-          <p>The next screens focus on recap, review, and export, so the flow feels like leaving Snapchat with your
-            history intact instead of just hoarding a zip file.</p>
+          <p>The next screens focus on detected files, metadata review, and a truthful JSON export.</p>
         </div>
       </section>
     </div>

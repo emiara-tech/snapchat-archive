@@ -32,10 +32,10 @@
       <section class="privacy-section">
         <h2>Recap logic</h2>
         <p>
-          The recap language is intentionally assistive. It is there to surface patterns and give emotional structure to the archive, not to replace the raw media or invent certainty.
+          The analysis language is intentionally conservative. It surfaces simple patterns from parsed JSON and avoids claiming more than the data supports.
         </p>
         <p>
-          If a recap card feels wrong, trust the underlying photos more than the summary. The archive browser should always remain the source of truth.
+          If a summary feels wrong, trust the raw export more than the summary layer. The archive diagnostics should always remain visible.
         </p>
       </section>
 
@@ -43,8 +43,8 @@
         <h2>Data lifecycle</h2>
         <ul>
           <li><strong>Import:</strong> Open the takeout zip locally</li>
-          <li><strong>Session:</strong> Review the recap and photo views in-browser</li>
-          <li><strong>Export:</strong> Package the useful media for Immich or JSON</li>
+          <li><strong>Session:</strong> Review metadata and diagnostics in-browser</li>
+          <li><strong>Export:</strong> Download normalized JSON metadata</li>
           <li><strong>Close:</strong> End the session without leaving a cloud copy behind</li>
         </ul>
       </section>
@@ -52,7 +52,7 @@
       <section class="privacy-section">
         <h2>Project angle</h2>
         <p>
-          The product direction is simple: Snapchat photos should be portable, legible, and easy to move into tools that respect ownership more than retention.
+          The product direction is simple: Snapchat exports should be portable, legible, and honest about what has and has not been parsed.
         </p>
       </section>
 
@@ -62,17 +62,17 @@
           Goodbye Snapchat was built around a stronger narrative than “archive viewer.” It is meant to feel like a deliberate off-ramp from a platform era that mattered.
         </p>
         <p>
-          That means recap first, review second, export third. The interface should help people reflect, keep what matters, and leave with the files in a form they can actually own.
+          That means detection first, review second, export third. The interface should help people understand what is in the archive before it promises media migration.
         </p>
         <p class="about-tagline">
-          &quot;Load the zip. Read the recap. Move on with the photos.&quot;
+          &quot;Load the zip. Verify the structure. Export what was parsed.&quot;
         </p>
       </section>
 
       <section class="contact-section card">
         <h2>Design principles</h2>
         <p>
-          Local-first by default. No account trap. Clear export path. A visual tone that treats the archive like a personal chapter, not just a dataset.
+          Local-first by default. No account trap. Clear diagnostics. A visual tone that treats the archive like a personal chapter, not just a dataset.
         </p>
       </section>
     </div>

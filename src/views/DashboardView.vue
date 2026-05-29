@@ -34,24 +34,24 @@ onMounted(() => {
           <span class="eyebrow">Recap overview</span>
           <h1>Your Snapchat chapter, compressed.</h1>
           <p class="page-subtitle">
-            Session opened on {{ importedDate }}. Start with the high-level patterns, then dig into the photos that
-            still matter.
+            Session opened on {{ importedDate }}. These numbers come from detected Snapchat export files and Memories
+            metadata.
           </p>
         </div>
         <nav class="dashboard-nav">
-          <router-link to="/photos" class="btn btn-secondary">Open review room</router-link>
-          <router-link to="/summary" class="btn btn-primary">Read the story</router-link>
+          <router-link to="/photos" class="btn btn-secondary">Review metadata</router-link>
+          <router-link to="/summary" class="btn btn-primary">Run analysis</router-link>
         </nav>
       </header>
 
       <section class="stats-section">
         <div class="stats-grid">
-          <StatCard icon="📸" :value="isLoadingStats ? '…' : formatNumber(stats?.totalSnaps || 0)"
-            label="Total snaps" />
+          <StatCard icon="M" :value="isLoadingStats ? '...' : formatNumber(stats?.totalMemories || 0)"
+            label="Saved memories" />
           <StatCard icon="💬" :value="isLoadingStats ? '…' : formatNumber(stats?.totalChats || 0)"
             label="Chat messages" />
-          <StatCard icon="📖" :value="isLoadingStats ? '…' : formatNumber(stats?.totalStories || 0)"
-            label="Stories posted" />
+          <StatCard icon="S" :value="isLoadingStats ? '...' : formatNumber(stats?.totalSnaps || 0)"
+            label="Snap events" />
           <StatCard icon="👥" :value="formatNumber(stats?.totalFriends || 0)" label="Friends" />
         </div>
       </section>
@@ -59,10 +59,10 @@ onMounted(() => {
       <section class="hero-strip card">
         <div class="hero-strip-copy">
           <span class="strip-label">Fast read</span>
-          <h2>{{ stats?.bestStreak }} days was your peak streak, across {{ stats?.totalDays }} days of captured history.
+          <h2>{{ stats?.longestChatActiveRunDays }} days was your longest chat activity run, across {{ stats?.totalDays }} days of dated records.
           </h2>
-          <p>Your archive stretches from {{ stats?.dateRange.start }} to {{ stats?.dateRange.end }}, with enough media
-            to justify a real exit plan instead of leaving it inside Snapchat.</p>
+          <p>Your parsed records stretch from {{ stats?.dateRange.start || 'unknown' }} to {{ stats?.dateRange.end || 'unknown' }}.
+            Indexed Memories and chat media currently total {{ stats?.totalIndexedMediaSize || '0 B' }}.</p>
         </div>
         <router-link to="/export" class="btn btn-primary">Prepare export</router-link>
       </section>
@@ -74,26 +74,26 @@ onMounted(() => {
             <div class="timeline-range">
               <div class="range-point">
                 <span class="range-date">{{ stats?.dateRange.start }}</span>
-                <span class="range-label">First snap</span>
+                <span class="range-label">First dated record</span>
               </div>
               <div class="range-line"></div>
               <div class="range-point">
                 <span class="range-date">{{ stats?.dateRange.end }}</span>
-                <span class="range-label">Latest activity</span>
+                <span class="range-label">Latest dated record</span>
               </div>
             </div>
             <div class="timeline-stats">
               <div class="timeline-stat">
                 <span class="stat-value">{{ stats?.totalDays }}</span>
-                <span class="stat-label">days of photos</span>
+                <span class="stat-label">days in range</span>
               </div>
               <div class="timeline-stat">
-                <span class="stat-value">{{ stats?.bestStreak }}</span>
-                <span class="stat-label">best streak</span>
+                <span class="stat-value">{{ stats?.longestChatActiveRunDays }}</span>
+                <span class="stat-label">chat activity run</span>
               </div>
               <div class="timeline-stat">
-                <span class="stat-value">{{ stats?.totalMediaSize }}</span>
-                <span class="stat-label">media size</span>
+                <span class="stat-value">{{ stats?.totalIndexedMediaSize }}</span>
+                <span class="stat-label">indexed media size</span>
               </div>
             </div>
           </div>
@@ -103,7 +103,7 @@ onMounted(() => {
       <section class="highlights-section">
         <h2 class="section-heading">Recap highlights</h2>
         <p class="section-subtitle">
-          Run analysis to generate insights about your Snapchat history.
+          Run local analyzers to generate inspectable, non-AI summaries of your Snapchat history.
           <router-link to="/summary">Open the full narrative</router-link>
         </p>
       </section>
@@ -133,13 +133,13 @@ onMounted(() => {
         <div class="export-content">
           <div class="export-icon" aria-hidden="true">↗</div>
           <div class="export-text">
-            <h3 class="export-title">Ready to leave with your files</h3>
+            <h3 class="export-title">Ready to export metadata</h3>
             <p class="export-description">
-              Package the image and video archive for Immich, or keep a metadata-rich JSON bundle for your own storage.
+              Download a JSON bundle of the normalized metadata, diagnostics, and computed stats.
             </p>
           </div>
           <router-link to="/export" class="btn btn-primary">
-            Export to Immich
+            Export JSON
           </router-link>
         </div>
       </section>

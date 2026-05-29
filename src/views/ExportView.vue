@@ -1,36 +1,47 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useArchiveStore } from '../stores/archive'
 
 const archiveStore = useArchiveStore()
-
-const isExporting = ref(false)
 const exportComplete = ref(false)
-const exportProgress = ref(0)
 
 const config = computed(() => archiveStore.exportConfig)
 
-function updateConfig(key: keyof typeof config.value, value: boolean | string) {
+onMounted(() => {
+  archiveStore.loadStats()
+})
+
+function updateConfig(key: keyof typeof config.value, value: boolean) {
   archiveStore.updateExportConfig({ [key]: value })
 }
 
-async function startExport() {
-  isExporting.value = true
-  exportProgress.value = 0
+function downloadMetadataJson() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    capabilities: archiveStore.archiveCapabilities,
+    diagnostics: archiveStore.archiveDiagnostics,
+    stats: archiveStore.archiveStats,
+    memories: archiveStore.memoriesList,
+    chats: config.value.includeChats ? archiveStore.chatHistory : undefined,
+    snaps: config.value.includeSnaps ? archiveStore.snapHistory : undefined,
+    stories: config.value.includeStories ? archiveStore.storiesList : undefined,
+    metadata: config.value.includeMetadata
+      ? {
+          importedDate: archiveStore.importedDate,
+          friendCount: archiveStore.friendsList.length,
+        }
+      : undefined,
+  }
 
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  exportProgress.value = 20
-
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  exportProgress.value = 50
-
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  exportProgress.value = 80
-
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  exportProgress.value = 100
-
-  isExporting.value = false
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `snapchat-archive-metadata-${new Date().toISOString().slice(0, 10)}.json`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
   exportComplete.value = true
 }
 </script>
@@ -39,55 +50,27 @@ async function startExport() {
   <div class="page">
     <div class="container container-narrow">
       <header class="page-header">
-        <span class="eyebrow">Exit with your files</span>
-        <h1>Take the photos somewhere you control.</h1>
+        <span class="eyebrow">Metadata export</span>
+        <h1>Download what the parser can prove.</h1>
         <p class="page-subtitle">
-          This screen packages the archive for the next home. Immich is the main handoff path, with JSON as the audit-friendly fallback.
+          This export writes normalized metadata, diagnostics, and stats to JSON. Media packaging and Immich import are
+          intentionally disabled until media mapping is implemented.
         </p>
       </header>
 
       <div class="export-options card">
         <h2 class="option-heading">Export format</h2>
-
-        <div class="format-options">
-          <label class="format-option" :class="{ selected: config.format === 'immich' }">
-            <input
-              type="radio"
-              name="format"
-              value="immich"
-              :checked="config.format === 'immich'"
-              @change="updateConfig('format', 'immich')"
-            />
-            <div class="format-content">
-              <span class="format-icon">⟶</span>
-              <div class="format-info">
-                <span class="format-name">Immich</span>
-                <span class="format-desc">Best for moving photos and videos into a self-hosted library</span>
-              </div>
-            </div>
-          </label>
-
-          <label class="format-option" :class="{ selected: config.format === 'json' }">
-            <input
-              type="radio"
-              name="format"
-              value="json"
-              :checked="config.format === 'json'"
-              @change="updateConfig('format', 'json')"
-            />
-            <div class="format-content">
-              <span class="format-icon">{}</span>
-              <div class="format-info">
-                <span class="format-name">JSON</span>
-                <span class="format-desc">Structured metadata bundle for backup, scripting, or later migration</span>
-              </div>
-            </div>
-          </label>
+        <div class="format-content">
+          <span class="format-icon">{}</span>
+          <div class="format-info">
+            <span class="format-name">JSON metadata</span>
+            <span class="format-desc">Includes Memories metadata and optional chat, snap, story, and diagnostic data.</span>
+          </div>
         </div>
       </div>
 
       <div class="export-options card">
-        <h2 class="option-heading">Include in export</h2>
+        <h2 class="option-heading">Include in JSON</h2>
 
         <div class="checkbox-group">
           <label class="checkbox-item">
@@ -96,7 +79,7 @@ async function startExport() {
               :checked="config.includeSnaps"
               @change="updateConfig('includeSnaps', !config.includeSnaps)"
             />
-            <span class="checkbox-label">Snaps (photos and videos)</span>
+            <span class="checkbox-label">Snap event metadata</span>
           </label>
 
           <label class="checkbox-item">
@@ -105,7 +88,7 @@ async function startExport() {
               :checked="config.includeChats"
               @change="updateConfig('includeChats', !config.includeChats)"
             />
-            <span class="checkbox-label">Chat messages</span>
+            <span class="checkbox-label">Chat message metadata and content from the export</span>
           </label>
 
           <label class="checkbox-item">
@@ -114,7 +97,7 @@ async function startExport() {
               :checked="config.includeStories"
               @change="updateConfig('includeStories', !config.includeStories)"
             />
-            <span class="checkbox-label">Stories</span>
+            <span class="checkbox-label">Story metadata</span>
           </label>
 
           <label class="checkbox-item">
@@ -123,45 +106,28 @@ async function startExport() {
               :checked="config.includeMetadata"
               @change="updateConfig('includeMetadata', !config.includeMetadata)"
             />
-            <span class="checkbox-label">Metadata (dates, locations, and people)</span>
+            <span class="checkbox-label">Import metadata and friend count</span>
           </label>
         </div>
       </div>
 
       <div class="export-info card">
-        <h3>What happens next?</h3>
-        <ol class="export-steps">
-          <li>
-            <strong>Package:</strong> The selected set is bundled for either gallery import or structured backup.
-          </li>
-          <li>
-            <strong>Move to Immich:</strong> Use Immich import on the media package if you chose the gallery path.
-          </li>
-          <li>
-            <strong>Stay local:</strong> The export step is presented as a browser-only handoff, with no server round-trip.
-          </li>
-        </ol>
+        <h3>Not implemented yet</h3>
+        <p>
+          This refactor does not package media files or generate Immich imports. The app first needs reliable mapping
+          between Memories metadata, local `memories/` files, and `chat_media/` attachments.
+        </p>
       </div>
 
       <div v-if="exportComplete" class="export-success card">
         <div class="success-icon">✓</div>
-        <h3>Export bundle ready.</h3>
-        <p>The demo flow is complete. In a real implementation, this is where the packaged download would begin automatically.</p>
-        <button class="btn btn-secondary" @click="exportComplete = false">
-          Export again
-        </button>
+        <h3>Metadata JSON downloaded.</h3>
+        <p>The file contains only data already parsed in this browser session.</p>
       </div>
 
-      <div v-else-if="isExporting" class="export-progress">
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: exportProgress + '%' }"></div>
-        </div>
-        <p>Packaging your export... {{ exportProgress }}%</p>
-      </div>
-
-      <div v-else class="export-actions">
-        <button class="btn btn-primary btn-lg" @click="startExport">
-          Package export
+      <div class="export-actions">
+        <button class="btn btn-primary btn-lg" @click="downloadMetadataJson">
+          Download metadata JSON
         </button>
       </div>
     </div>
@@ -170,7 +136,7 @@ async function startExport() {
 
 <style scoped>
 .container-narrow {
-  max-width: 600px;
+  max-width: 640px;
 }
 
 .page-header {
@@ -197,34 +163,13 @@ async function startExport() {
   margin-bottom: var(--space-md);
 }
 
-.format-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-md);
-}
-
-.format-option {
-  cursor: pointer;
-}
-
-.format-option input {
-  position: absolute;
-  opacity: 0;
-}
-
-.format-option .format-content {
+.format-content {
   display: flex;
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-md);
-  border: 2px solid var(--border);
+  border: 2px solid var(--secondary);
   border-radius: 18px;
-  transition: all var(--transition-fast);
-  background: rgba(255, 255, 255, 0.52);
-}
-
-.format-option.selected .format-content {
-  border-color: var(--secondary);
   background: rgba(31, 105, 88, 0.08);
 }
 
@@ -283,11 +228,9 @@ async function startExport() {
   margin-bottom: var(--space-md);
 }
 
-.export-steps {
-  padding-left: var(--space-lg);
+.export-info p {
   color: var(--text-soft);
-  line-height: 1.8;
-  font-size: 0.9rem;
+  line-height: 1.7;
 }
 
 .export-success {
@@ -296,6 +239,7 @@ async function startExport() {
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
   background: rgba(43, 138, 104, 0.08);
   border: 1px solid rgba(43, 138, 104, 0.22);
 }
@@ -311,30 +255,6 @@ async function startExport() {
   color: var(--success);
 }
 
-.export-progress {
-  margin: var(--space-xl) 0;
-}
-
-.progress-bar {
-  height: 8px;
-  background: var(--border);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--secondary), var(--accent-strong));
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.export-progress p {
-  text-align: center;
-  color: var(--text-soft);
-  margin-top: var(--space-sm);
-}
-
 .export-actions {
   display: flex;
   justify-content: center;
@@ -342,8 +262,9 @@ async function startExport() {
 }
 
 @media (max-width: 640px) {
-  .format-options {
-    grid-template-columns: 1fr;
+  .format-content {
+    align-items: flex-start;
   }
 }
 </style>
+

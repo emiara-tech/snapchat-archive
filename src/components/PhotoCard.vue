@@ -2,57 +2,49 @@
   <article class="photo-card card" :aria-label="photoLabel">
     <div class="photo-header">
       <div class="photo-type">
-        <span class="type-icon">{{ typeIcon }}</span>
-        <span class="type-label">{{ photo['Media Type'] }}</span>
+        <span class="type-dot" aria-hidden="true"></span>
+        <span class="type-label">{{ photo.mediaType }}</span>
       </div>
-      <time :datetime="photo.Date" class="photo-date">
+      <time :datetime="photo.date" class="photo-date">
         {{ formattedDate }}
       </time>
     </div>
 
-    <div class="photo-content">
-      <div class="photo-media">
-        <div class="media-placeholder">
-          <span class="media-icon">{{ mediaIcon }}</span>
-        </div>
+    <dl class="photo-meta">
+      <div>
+        <dt>Location</dt>
+        <dd>{{ photo.location || 'Not included' }}</dd>
       </div>
-
-      <div class="photo-meta">
-        <p v-if="photo.Location" class="photo-location">
-          <span class="location-label">Location:</span>
-          <span>{{ photo.Location }}</span>
-        </p>
+      <div>
+        <dt>Download URL</dt>
+        <dd>{{ hasDownloadUrl ? 'Present in metadata' : 'Not included' }}</dd>
       </div>
-    </div>
+    </dl>
   </article>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Photo } from '../types'
+import type { MemoryRecord } from '../types'
 
 const props = defineProps<{
-  photo: Photo
+  photo: MemoryRecord
 }>()
 
-const typeIcon = computed(() => {
-  return props.photo['Media Type'] === 'Video' ? '🎬' : '🖼️'
-})
-
-const mediaIcon = computed(() => {
-  return props.photo['Media Type'] === 'Video' ? '🎬' : '🖼️'
-})
+const hasDownloadUrl = computed(() => Boolean(props.photo.mediaDownloadUrl || props.photo.downloadLink))
 
 const formattedDate = computed(() => {
-  return new Date(props.photo.Date).toLocaleDateString('en-US', {
+  const date = new Date(props.photo.date)
+  if (Number.isNaN(date.getTime())) return props.photo.date
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   })
 })
 
 const photoLabel = computed(() => {
-  return `Photo from ${props.photo.Date}`
+  return `Memory metadata from ${props.photo.date}`
 })
 </script>
 
@@ -75,6 +67,7 @@ const photoLabel = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-md);
 }
 
 .photo-type {
@@ -86,52 +79,43 @@ const photoLabel = computed(() => {
   text-transform: capitalize;
 }
 
-.type-icon {
-  font-size: 1rem;
+.type-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--secondary);
 }
 
 .photo-date {
   font-size: 0.8rem;
   color: var(--text-soft);
-}
-
-.photo-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.photo-media {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: var(--bg-subtle);
-}
-
-.media-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  background: linear-gradient(135deg, rgba(243, 203, 69, 0.18) 0%, rgba(31, 105, 88, 0.08) 100%);
+  white-space: nowrap;
 }
 
 .photo-meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
 }
 
-.photo-location {
-  font-size: 0.875rem;
-  color: var(--text-soft);
+.photo-meta div {
+  display: grid;
+  gap: 2px;
 }
 
-.location-label {
-  color: var(--text-soft);
-  margin-right: var(--space-xs);
+.photo-meta dt {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.photo-meta dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  word-break: break-word;
 }
 </style>
+

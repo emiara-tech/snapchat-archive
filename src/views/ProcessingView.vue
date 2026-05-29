@@ -50,7 +50,7 @@ onMounted(() => {
         <span class="eyebrow">Private processing</span>
         <h1>Building your Snapchat recap.</h1>
         <p class="processing-subtitle">
-          The flow is staged like a local recap session: open the takeout, index the history, and prepare the archive for review and export.
+          The flow opens the takeout locally, indexes the archive paths, and detects which Snapchat export files are actually present.
         </p>
 
         <div class="progress-container">
@@ -73,15 +73,15 @@ onMounted(() => {
           </div>
           <div class="detail-item">
             <span class="detail-icon" :class="{ complete: archiveStore.processingProgress >= 40 }">✓</span>
-            <span>Map photos and saved media</span>
+            <span>Detect Memories and chat media folders</span>
           </div>
           <div class="detail-item">
             <span class="detail-icon" :class="{ complete: archiveStore.processingProgress >= 60 }">✓</span>
-            <span>Read conversations and streaks</span>
+            <span>Prepare JSON metadata readers</span>
           </div>
           <div class="detail-item">
             <span class="detail-icon" :class="{ complete: archiveStore.processingProgress >= 80 }">✓</span>
-            <span>Assemble the recap cards</span>
+            <span>Record archive diagnostics</span>
           </div>
           <div class="detail-item">
             <span class="detail-icon" :class="{ complete: archiveStore.processingProgress >= 100 }">✓</span>

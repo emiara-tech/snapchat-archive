@@ -1,31 +1,69 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { Friend, Photo, Story, ComputedArchiveStats, ExportConfig, ChatHistory, SnapHistory, StoryHistoryJson, PhotosJson } from '../types'
-import type { ArchiveSession, ArchiveProgressCallback } from '../lib/snapArchive'
+import { computed, ref } from 'vue'
+import type {
+  ArchiveCapabilities,
+  ArchiveDiagnostics,
+  ChatHistory,
+  ComputedArchiveStats,
+  ExportConfig,
+  Friend,
+  MemoryRecord,
+  SnapHistory,
+  Story,
+} from '../types'
+import type { ArchiveProgressCallback, ArchiveSession } from '../lib/snapArchive'
 import { createArchiveSession, SNAP_JSON_PATHS } from '../lib/snapArchive'
 import { computeStats } from '../lib/computeStats'
 import {
   AnalysisManager,
-  StreakAnalyzer,
   BestFriendsAnalyzer,
   SentimentAnalyzer,
-  WordCloudAnalyzer,
+  StreakAnalyzer,
   TimelineAnalyzer,
+  WordCloudAnalyzer,
 } from '../lib/analyzers'
+import {
+  parseChatHistoryJson,
+  parseMemoriesHistoryJson,
+  parseSnapHistoryJson,
+  parseStoryHistoryJson,
+} from '../lib/snapchatParsers'
+
+const EMPTY_CAPABILITIES: ArchiveCapabilities = {
+  hasAccountJson: false,
+  hasFriendsJson: false,
+  hasChatHistoryJson: false,
+  hasSnapHistoryJson: false,
+  hasStoryHistoryJson: false,
+  hasMemoriesHistoryJson: false,
+  hasMemoriesDirectory: false,
+  hasChatMediaDirectory: false,
+}
+
+const EMPTY_DIAGNOSTICS: ArchiveDiagnostics = {
+  missingExpectedPaths: [],
+  unknownJsonFiles: [],
+  mediaCountsByDirectory: {},
+  mediaCountsByExtension: {},
+  duplicateEntryPaths: [],
+}
 
 export const useArchiveStore = defineStore('archive', () => {
   const isImported = ref(false)
   const isProcessing = ref(false)
   const processingProgress = ref(0)
   const processingStatus = ref('')
-  const hasAIConsent = ref(false)
+  const importError = ref<string | null>(null)
+  const statsError = ref<string | null>(null)
 
   const friendsList = ref<Friend[]>([])
   const chatHistory = ref<ChatHistory | null>(null)
   const snapHistory = ref<SnapHistory | null>(null)
-  const photosList = ref<Photo[]>([])
+  const memoriesList = ref<MemoryRecord[]>([])
   const storiesList = ref<Story[]>([])
   const archiveStats = ref<ComputedArchiveStats | null>(null)
+  const archiveCapabilities = ref<ArchiveCapabilities>({ ...EMPTY_CAPABILITIES })
+  const archiveDiagnostics = ref<ArchiveDiagnostics>({ ...EMPTY_DIAGNOSTICS })
   const isLoadingStats = ref(false)
   const analysisManager = ref<AnalysisManager | null>(null)
   const analysisResults = ref<Map<string, unknown>>(new Map())
@@ -37,12 +75,14 @@ export const useArchiveStore = defineStore('archive', () => {
     includeChats: true,
     includeStories: true,
     includeMetadata: true,
-    format: 'immich'
+    format: 'json',
   })
 
   const importedDate = ref<string | null>(null)
 
-  const totalPhotos = computed(() => photosList.value.length)
+  const totalMemories = computed(() => memoriesList.value.length)
+  const totalPhotos = totalMemories
+  const photosList = memoriesList
   const totalFriends = computed(() => friendsList.value.length)
   const totalChats = computed(() => {
     if (!chatHistory.value) return 0
@@ -50,6 +90,8 @@ export const useArchiveStore = defineStore('archive', () => {
   })
 
   function startProcessing() {
+    importError.value = null
+    statsError.value = null
     isProcessing.value = true
     processingProgress.value = 0
   }
@@ -67,58 +109,64 @@ export const useArchiveStore = defineStore('archive', () => {
   }
 
   async function prepareArchive(files: File[], onProgress?: ArchiveProgressCallback): Promise<void> {
-    const session = await createArchiveSession(files, (progress, status) => {
-      updateProgress(progress, status)
-      onProgress?.(progress, status)
-    })
+    try {
+      const session = await createArchiveSession(files, (progress, status) => {
+        updateProgress(progress, status)
+        onProgress?.(progress, status)
+      })
 
-    archiveSession.value = session
-    friendsList.value = session.metadata.friends
-    // Stats will be computed lazily when the dashboard calls loadStats()
-    archiveStats.value = null
-    initializeAnalyzers(session)
+      archiveSession.value = session
+      friendsList.value = session.metadata.friends
+      archiveCapabilities.value = session.metadata.capabilities
+      archiveDiagnostics.value = session.metadata.diagnostics
+      archiveStats.value = null
+      initializeAnalyzers(session)
+    } catch (error) {
+      importError.value = error instanceof Error ? error.message : 'Failed to import archive'
+      throw error
+    }
   }
 
-  /**
-   * Lazy-load the heavy JSON files and compute all stats.
-   * Safe to call multiple times — returns immediately if stats are already loaded.
-   * Called by the dashboard on mount.
-   */
   async function loadStats(): Promise<void> {
     if (archiveStats.value !== null) return
     if (!archiveSession.value) return
     if (isLoadingStats.value) return
 
     isLoadingStats.value = true
-    const { reader, metadata } = archiveSession.value
+    statsError.value = null
+    const { reader, metadata, index } = archiveSession.value
 
     try {
       updateProgress(10, 'Loading snap history')
-      const snap = await reader.readJsonFile<SnapHistory>(SNAP_JSON_PATHS.snapHistory)
+      const snap = parseSnapHistoryJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.snapHistory))
       snapHistory.value = snap
 
       updateProgress(35, 'Loading chat history')
-      const chat = await reader.readJsonFile<ChatHistory>(SNAP_JSON_PATHS.chatHistory)
+      const chat = parseChatHistoryJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.chatHistory))
       chatHistory.value = chat
 
       updateProgress(60, 'Loading story history')
-      const storyJson = await reader.readJsonFile<StoryHistoryJson>(SNAP_JSON_PATHS.storyHistory)
+      const storyJson = parseStoryHistoryJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.storyHistory))
       storiesList.value = storyJson?.['Your Story Views'] ?? []
 
-      updateProgress(75, 'Loading photos')
-      const photosJson = await reader.readJsonFile<PhotosJson>(SNAP_JSON_PATHS.photosHistory)
-      photosList.value = photosJson?.['Saved Media'] ?? []
+      updateProgress(75, 'Loading memories metadata')
+      const memories = parseMemoriesHistoryJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.memoriesHistory))
+      memoriesList.value = memories
 
       updateProgress(90, 'Computing stats')
       archiveStats.value = computeStats({
-        account: metadata.account,
         friends: metadata.friends,
         snapHistory: snap,
         chatHistory: chat,
         storyHistory: storyJson,
+        memories,
+        indexedMediaBytes: computeIndexedMediaBytes(index),
       })
 
       updateProgress(100, 'Done')
+    } catch (error) {
+      statsError.value = error instanceof Error ? error.message : 'Failed to load archive stats'
+      throw error
     } finally {
       isLoadingStats.value = false
     }
@@ -148,12 +196,8 @@ export const useArchiveStore = defineStore('archive', () => {
     selectedFiles.value = files
   }
 
-  function setAIConsent(consent: boolean) {
-    hasAIConsent.value = consent
-  }
-
   function updateExportConfig(config: Partial<ExportConfig>) {
-    exportConfig.value = { ...exportConfig.value, ...config }
+    exportConfig.value = { ...exportConfig.value, ...config, format: 'json' }
   }
 
   function resetArchive() {
@@ -161,13 +205,16 @@ export const useArchiveStore = defineStore('archive', () => {
     isProcessing.value = false
     processingProgress.value = 0
     processingStatus.value = ''
-    hasAIConsent.value = false
+    importError.value = null
+    statsError.value = null
     friendsList.value = []
     chatHistory.value = null
     snapHistory.value = null
-    photosList.value = []
+    memoriesList.value = []
     storiesList.value = []
     archiveStats.value = null
+    archiveCapabilities.value = { ...EMPTY_CAPABILITIES }
+    archiveDiagnostics.value = { ...EMPTY_DIAGNOSTICS }
     isLoadingStats.value = false
     analysisManager.value = null
     analysisResults.value = new Map()
@@ -181,19 +228,24 @@ export const useArchiveStore = defineStore('archive', () => {
     isProcessing,
     processingProgress,
     processingStatus,
-    hasAIConsent,
+    importError,
+    statsError,
     friendsList,
     chatHistory,
     snapHistory,
+    memoriesList,
     photosList,
     storiesList,
     archiveStats,
+    archiveCapabilities,
+    archiveDiagnostics,
     isLoadingStats,
     exportConfig,
     analysisResults,
     archiveSession,
     selectedFiles,
     importedDate,
+    totalMemories,
     totalPhotos,
     totalFriends,
     totalChats,
@@ -204,8 +256,14 @@ export const useArchiveStore = defineStore('archive', () => {
     loadStats,
     runAnalyzer,
     setSelectedFiles,
-    setAIConsent,
     updateExportConfig,
-    resetArchive
+    resetArchive,
   }
 })
+
+function computeIndexedMediaBytes(sessionIndex: ArchiveSession['index']): number {
+  return sessionIndex.entries
+    .filter((entry) => !entry.isDirectory)
+    .filter((entry) => entry.id.path.startsWith('memories/') || entry.id.path.startsWith('chat_media/'))
+    .reduce((sum, entry) => sum + entry.uncompressedSize, 0)
+}

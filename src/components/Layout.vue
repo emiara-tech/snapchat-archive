@@ -93,15 +93,15 @@ function resetArchive() {
       <div class="footer-inner">
         <div class="footer-brand">
           <span class="footer-eyebrow">Goodbye Snapchat</span>
-          <p class="footer-tagline">Review your takeout locally, get a recap of the era, and move the photos somewhere
-            you actually control.</p>
+          <p class="footer-tagline">Review your takeout locally, inspect detected metadata, and export a JSON record
+            you control.</p>
         </div>
         <nav class="footer-nav">
           <router-link to="/privacy">Privacy</router-link>
           <router-link to="/import">Import</router-link>
           <router-link to="/export">Export</router-link>
         </nav>
-        <p class="footer-copy">{{ currentYear }} · Browser-only demo flow for Snapchat takeout review</p>
+        <p class="footer-copy">{{ currentYear }} · Browser-only Snapchat takeout metadata review</p>
       </div>
     </footer>
   </div>

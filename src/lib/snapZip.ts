@@ -153,6 +153,34 @@ export async function readSnapZipEntryContent(
   }
 }
 
+export function findSnapZipEntryByPath(
+  index: SnapZipIndex,
+  path: string,
+): SnapZipEntryMeta | undefined {
+  return index.entries.find((entry) => entry.id.path === path)
+}
+
+export function findSnapZipEntriesByPrefix(
+  index: SnapZipIndex,
+  prefix: string,
+): SnapZipEntryMeta[] {
+  return index.entries.filter((entry) => entry.id.path.startsWith(prefix))
+}
+
+export function findDuplicateSnapZipPaths(index: SnapZipIndex): string[] {
+  const seen = new Set<string>()
+  const duplicates = new Set<string>()
+
+  for (const entry of index.entries) {
+    if (seen.has(entry.id.path)) {
+      duplicates.add(entry.id.path)
+    }
+    seen.add(entry.id.path)
+  }
+
+  return Array.from(duplicates).sort()
+}
+
 function getEntryKey(entryId: SnapZipEntryId): string {
   return `${entryId.sourceId}::${entryId.path}`
 }

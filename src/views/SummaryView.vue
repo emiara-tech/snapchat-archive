@@ -1,99 +1,110 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useArchiveStore } from '../stores/archive'
 
 const archiveStore = useArchiveStore()
+const runningAnalyzer = ref<string | null>(null)
 
 const stats = computed(() => archiveStore.archiveStats)
 const isLoadingStats = computed(() => archiveStore.isLoadingStats)
-const hasAIConsent = computed(() => archiveStore.hasAIConsent)
-const analysisResults = computed(() => archiveStore.analysisResults)
+const analysisResults = computed(() => Array.from(archiveStore.analysisResults.entries()))
+
+const analyzers = [
+  { id: 'timeline', label: 'Chat activity timeline' },
+  { id: 'bestFriends', label: 'Top conversations' },
+  { id: 'wordCloud', label: 'Common words' },
+  { id: 'streaks', label: 'Conversation activity runs' },
+  { id: 'sentiment', label: 'Keyword sentiment prototype' },
+]
 
 onMounted(() => {
   archiveStore.loadStats()
 })
+
+async function runAnalyzer(id: string) {
+  runningAnalyzer.value = id
+  try {
+    await archiveStore.runAnalyzer(id)
+  } finally {
+    runningAnalyzer.value = null
+  }
+}
 </script>
 
 <template>
   <div class="page">
     <div class="container container-narrow">
       <header class="page-header">
-        <span class="eyebrow">Narrative recap</span>
-        <h1>The short version of your Snapchat years.</h1>
+        <span class="eyebrow">Local analysis</span>
+        <h1>Inspectable summaries, not invented certainty.</h1>
         <p class="page-subtitle">
-          This page turns the archive into a readable chapter summary. The framing is reflective on purpose: who mattered, when the peaks happened, and what kind of history you are actually leaving with.
+          These analyzers run in the browser against parsed Snapchat JSON. They are simple heuristics and expose their
+          raw output.
         </p>
       </header>
 
-      <div class="consent-banner card" v-if="!hasAIConsent">
-        <div class="consent-content">
-          <h3>Run the local recap layer</h3>
-          <p>
-            This demo uses local heuristics and mock patterns to present the recap view. No external AI service is called from this screen.
-          </p>
+      <section class="stats-summary">
+        <h2 class="section-heading">Parsed archive numbers</h2>
+        <p v-if="isLoadingStats" class="section-subtitle">Computing stats...</p>
+        <div v-else class="stats-grid-simple">
+          <div class="stat-item">
+            <span class="stat-value">{{ (stats?.totalMemories ?? 0).toLocaleString() }}</span>
+            <span class="stat-label">saved Memories metadata records</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ (stats?.totalChats ?? 0).toLocaleString() }}</span>
+            <span class="stat-label">chat messages</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ (stats?.totalDays ?? 0).toLocaleString() }}</span>
+            <span class="stat-label">days between first and last dated record</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ stats?.totalFriends ?? 0 }}</span>
+            <span class="stat-label">friends in friends.json</span>
+          </div>
         </div>
-        <button class="btn btn-primary" @click="archiveStore.setAIConsent(true)">
-          Show recap cards
-        </button>
-      </div>
+      </section>
 
-      <template v-if="hasAIConsent">
-        <section class="stats-summary">
-          <h2 class="section-heading">Your archive in numbers</h2>
-          <p v-if="isLoadingStats" class="section-subtitle">Computing stats…</p>
-          <div v-else class="stats-grid-simple">
-            <div class="stat-item">
-              <span class="stat-value">{{ (stats?.totalSnaps ?? 0).toLocaleString() }}</span>
-              <span class="stat-label">snaps sent and received</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ (stats?.totalChats ?? 0).toLocaleString() }}</span>
-              <span class="stat-label">chat messages</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ (stats?.totalDays ?? 0).toLocaleString() }}</span>
-              <span class="stat-label">days of photos</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ stats?.totalFriends ?? 0 }}</span>
-              <span class="stat-label">friends</span>
-            </div>
-          </div>
-        </section>
+      <section class="analysis-section">
+        <h2 class="section-heading">Run analyzers</h2>
+        <div class="analyzer-actions">
+          <button
+            v-for="analyzer in analyzers"
+            :key="analyzer.id"
+            class="btn btn-secondary"
+            :disabled="runningAnalyzer !== null"
+            @click="runAnalyzer(analyzer.id)"
+          >
+            {{ runningAnalyzer === analyzer.id ? 'Running...' : analyzer.label }}
+          </button>
+        </div>
 
-        <section class="analysis-section">
-          <h2 class="section-heading">Analysis Results</h2>
-          <p class="section-subtitle">
-            Run analyzers from the archive store to see insights about your Snapchat history.
-          </p>
-          <div v-if="analysisResults.size > 0" class="analysis-results">
-            <div v-for="[key, value] in Array.from(analysisResults.entries())" :key="key" class="analysis-item card">
-              <h3>{{ key }}</h3>
-              <pre>{{ JSON.stringify(value, null, 2) }}</pre>
-            </div>
+        <div v-if="analysisResults.length > 0" class="analysis-results">
+          <div v-for="[key, value] in analysisResults" :key="key" class="analysis-item card">
+            <h3>{{ key }}</h3>
+            <pre>{{ JSON.stringify(value, null, 2) }}</pre>
           </div>
-          <div v-else class="empty-state">
-            <p>No analysis results yet. Run analyzers to generate insights.</p>
-          </div>
-        </section>
+        </div>
+        <div v-else class="empty-state">
+          <p>No analysis results yet.</p>
+        </div>
+      </section>
 
-        <section class="disclaimer card">
-          <h3>How to read this page</h3>
-          <p>
-            These recap cards are assistive, not authoritative. They are here to make the archive legible and emotionally navigable, not to tell you what your life meant.
-          </p>
-          <p>
-            If something feels off, trust the raw photos more than the summary layer and jump into the review screens.
-          </p>
-        </section>
-      </template>
+      <section class="disclaimer card">
+        <h3>Limits</h3>
+        <p>
+          The sentiment analyzer is keyword based. Activity runs are not Snapchat streaks. Media files are not rendered
+          or matched to chats in this refactor.
+        </p>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped>
 .container-narrow {
-  max-width: 800px;
+  max-width: 900px;
 }
 
 .page-header {
@@ -105,35 +116,15 @@ onMounted(() => {
   margin: 16px 0 12px;
 }
 
-.page-subtitle {
+.page-subtitle,
+.section-subtitle {
   color: var(--text-soft);
   font-size: 1.05rem;
   line-height: 1.6;
 }
 
-.consent-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
-  padding: var(--space-lg);
-  background: rgba(255, 251, 245, 0.92);
-  border: 1px solid var(--border-strong);
-}
-
-.consent-content h3 {
-  font-size: 1rem;
-  margin-bottom: var(--space-xs);
-}
-
-.consent-content p {
-  font-size: 0.9rem;
-  color: var(--text-soft);
-  max-width: 500px;
-}
-
-.stats-summary {
+.stats-summary,
+.analysis-section {
   margin-bottom: var(--space-2xl);
 }
 
@@ -169,14 +160,35 @@ onMounted(() => {
   color: var(--text-soft);
 }
 
-.highlight-section {
-  margin-bottom: var(--space-2xl);
+.analyzer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
 
-.highlights-list {
-  display: flex;
-  flex-direction: column;
+.analyzer-actions .btn:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.analysis-results {
+  display: grid;
   gap: var(--space-md);
+}
+
+.analysis-item pre {
+  max-height: 360px;
+  overflow: auto;
+  padding: var(--space-md);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.empty-state {
+  color: var(--text-soft);
 }
 
 .disclaimer {
@@ -194,21 +206,12 @@ onMounted(() => {
   font-size: 0.9rem;
   color: var(--text-soft);
   line-height: 1.6;
-  margin-bottom: var(--space-sm);
-}
-
-.disclaimer p:last-child {
-  margin-bottom: 0;
 }
 
 @media (max-width: 640px) {
-  .consent-banner {
-    flex-direction: column;
-    text-align: center;
-  }
-
   .stats-grid-simple {
     grid-template-columns: 1fr;
   }
 }
 </style>
+

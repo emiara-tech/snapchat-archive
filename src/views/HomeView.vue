@@ -6,7 +6,7 @@
           <span class="eyebrow">Free software · Local-first</span>
           <h1>Your archive, your machine.</h1>
           <p class="hero-subtitle">
-            Drop your Snapchat takeout zip. Browse photos, export what matters. Nothing leaves your browser.
+            Drop your Snapchat takeout zip. Inspect metadata, run local summaries, and export JSON. Nothing leaves your browser.
           </p>
           <div class="hero-actions">
             <router-link to="/import" class="btn btn-primary">Open archive</router-link>
@@ -21,33 +21,32 @@
 
           <div class="preview-stats">
             <article>
-              <strong>8,934</strong>
-              <span>snaps</span>
+              <strong>564</strong>
+              <span>memories</span>
             </article>
             <article>
-              <strong>847</strong>
-              <span>best streak</span>
+              <strong>9.2 GB</strong>
+              <span>local fixture</span>
             </article>
             <article>
-              <strong>4.2 GB</strong>
-              <span>media</span>
+              <strong>JSON</strong>
+              <span>export</span>
             </article>
           </div>
 
           <div class="preview-story">
             <p class="story-label">Your recap</p>
-            <h2>A five-year thread with Sarah. Birthdays, graduations, late-night plans—your archive peaks around what
-              mattered.</h2>
+            <h2>Detected files first: Memories metadata, chat history, snap history, story history, and archive diagnostics.</h2>
           </div>
 
           <div class="preview-rail">
             <div class="rail-block">
               <span class="rail-title">Review</span>
-              <p>Filter by friend, year, and type.</p>
+              <p>Filter Memories metadata by year and type.</p>
             </div>
             <div class="rail-block accent">
               <span class="rail-title">Export</span>
-              <p>Take your photos with you, into a new tomorrow.</p>
+              <p>Download normalized metadata and diagnostics.</p>
             </div>
           </div>
         </div>
@@ -64,13 +63,13 @@
           </div>
           <div class="flow-step">
             <span class="step-num">2</span>
-            <h3>Browse locally</h3>
-            <p>Photos, stories, chats—all in your browser</p>
+            <h3>Inspect locally</h3>
+            <p>Metadata, stories, chats, and diagnostics in your browser</p>
           </div>
           <div class="flow-step">
             <span class="step-num">3</span>
             <h3>Export clean</h3>
-            <p>Immich package or raw JSON. Your call.</p>
+            <p>JSON metadata now. Media packaging later.</p>
           </div>
         </div>
 

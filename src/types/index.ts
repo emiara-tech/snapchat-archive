@@ -38,16 +38,19 @@ export interface SnapEntry {
 export type SnapHistory = Record<string, SnapEntry[]>
 
 export interface Photo {
-  Date: string
-  "Media Type": 'Image' | 'Video'
-  Location?: string
-  "Download Link"?: string
-  "Media Download Url"?: string
+  date: string
+  mediaType: 'Image' | 'Video' | string
+  location: string | null
+  downloadLink: string | null
+  mediaDownloadUrl: string | null
 }
 
 export interface PhotosJson {
   "Saved Media": Photo[]
 }
+
+export type MemoryRecord = Photo
+export type MemoriesHistoryJson = PhotosJson
 
 export interface Story {
   "Story Date": string
@@ -80,13 +83,34 @@ export interface Account {
 export interface ArchiveMetadata {
   account: Account | null
   friends: Friend[]
+  capabilities: ArchiveCapabilities
+  diagnostics: ArchiveDiagnostics
   stats: {
     friendCount: number
     hasChatHistory: boolean
     hasSnapHistory: boolean
-    hasPhotosHistory: boolean
+    hasMemoriesHistory: boolean
     hasStoryHistory: boolean
   }
+}
+
+export interface ArchiveCapabilities {
+  hasAccountJson: boolean
+  hasFriendsJson: boolean
+  hasChatHistoryJson: boolean
+  hasSnapHistoryJson: boolean
+  hasStoryHistoryJson: boolean
+  hasMemoriesHistoryJson: boolean
+  hasMemoriesDirectory: boolean
+  hasChatMediaDirectory: boolean
+}
+
+export interface ArchiveDiagnostics {
+  missingExpectedPaths: string[]
+  unknownJsonFiles: string[]
+  mediaCountsByDirectory: Record<string, number>
+  mediaCountsByExtension: Record<string, number>
+  duplicateEntryPaths: string[]
 }
 
 export interface TopFriendEntry {
@@ -101,15 +125,16 @@ export interface ComputedArchiveStats {
   totalSnaps: number
   totalChats: number
   totalStories: number
+  totalMemories: number
   totalFriends: number
-  bestStreak: number
+  longestChatActiveRunDays: number
   dateRange: {
     start: string
     end: string
   }
   totalDays: number
   topFriends: TopFriendEntry[]
-  totalMediaSize: string
+  totalIndexedMediaSize: string
 }
 
 // Legacy alias kept to avoid breaking imports during migration
@@ -120,7 +145,7 @@ export interface ExportConfig {
   includeChats: boolean
   includeStories: boolean
   includeMetadata: boolean
-  format: 'immich' | 'json'
+  format: 'json'
   dateRange?: {
     start: string
     end: string

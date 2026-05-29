@@ -1,36 +1,43 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useArchiveStore } from '../stores/archive'
 import PhotoCard from '../components/PhotoCard.vue'
-import type { Photo } from '../types'
+import type { MemoryRecord } from '../types'
 
 const archiveStore = useArchiveStore()
 
 const selectedType = ref<string>('all')
 const selectedYear = ref<string>('all')
-const selectedPhoto = ref<Photo | null>(null)
+const selectedPhoto = ref<MemoryRecord | null>(null)
 
-const types = ['all', 'Image', 'Video']
+const types = computed(() => {
+  const typeSet = new Set(archiveStore.memoriesList.map((memory) => memory.mediaType).filter(Boolean))
+  return ['all', ...Array.from(typeSet).sort()]
+})
 
 const years = computed(() => {
   const yearSet = new Set<string>()
-  archiveStore.photosList.forEach((photo) => {
-    yearSet.add(photo.Date.substring(0, 4))
+  archiveStore.memoriesList.forEach((memory) => {
+    if (memory.date.length >= 4) yearSet.add(memory.date.substring(0, 4))
   })
   return ['all', ...Array.from(yearSet).sort().reverse()]
 })
 
 const filteredPhotos = computed(() => {
-  return archiveStore.photosList
-    .filter((photo) => {
-      if (selectedType.value !== 'all' && photo['Media Type'] !== selectedType.value) return false
-      if (selectedYear.value !== 'all' && !photo.Date.startsWith(selectedYear.value)) return false
+  return archiveStore.memoriesList
+    .filter((memory) => {
+      if (selectedType.value !== 'all' && memory.mediaType !== selectedType.value) return false
+      if (selectedYear.value !== 'all' && !memory.date.startsWith(selectedYear.value)) return false
       return true
     })
-    .sort((a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime())
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 })
 
-function selectPhoto(photo: Photo) {
+onMounted(() => {
+  archiveStore.loadStats()
+})
+
+function selectPhoto(photo: MemoryRecord) {
   selectedPhoto.value = photo
 }
 
@@ -43,12 +50,22 @@ function closeDetail() {
   <div class="page">
     <div class="container">
       <header class="page-header">
-        <span class="eyebrow">Review room</span>
-        <h1>Review the photos before you move them.</h1>
+        <span class="eyebrow">Memories metadata</span>
+        <h1>Review what Snapchat says is in Memories.</h1>
         <p class="page-subtitle">
-          {{ filteredPhotos.length }} items in the current filter set.
+          {{ filteredPhotos.length }} metadata records in the current filter set. Media rendering is not implemented in
+          this pass.
         </p>
       </header>
+
+      <section class="card diagnostics-card">
+        <h2 class="section-heading">Archive detection</h2>
+        <div class="diagnostics-grid">
+          <span>memories_history.json: {{ archiveStore.archiveCapabilities.hasMemoriesHistoryJson ? 'found' : 'missing' }}</span>
+          <span>memories folder: {{ archiveStore.archiveCapabilities.hasMemoriesDirectory ? 'found' : 'missing' }}</span>
+          <span>chat_media folder: {{ archiveStore.archiveCapabilities.hasChatMediaDirectory ? 'found' : 'missing' }}</span>
+        </div>
+      </section>
 
       <div class="filters-bar">
         <div class="filter-group">
@@ -67,11 +84,11 @@ function closeDetail() {
       </div>
 
       <div class="photos-grid" v-if="filteredPhotos.length > 0">
-        <PhotoCard v-for="(photo, index) in filteredPhotos" :key="index" :photo="photo" @click="selectPhoto(photo)" />
+        <PhotoCard v-for="(photo, index) in filteredPhotos" :key="`${photo.date}-${index}`" :photo="photo" @click="selectPhoto(photo)" />
       </div>
 
       <div v-else class="empty-state">
-        <p>No photos match those filters.</p>
+        <p>No Memories metadata matches those filters.</p>
         <button class="btn btn-secondary" @click="selectedType = 'all'; selectedYear = 'all'">
           Clear filters
         </button>
@@ -81,24 +98,27 @@ function closeDetail() {
     <Transition name="slide">
       <div v-if="selectedPhoto" class="detail-overlay" @click.self="closeDetail">
         <div class="detail-drawer card">
-          <button class="close-btn" @click="closeDetail" aria-label="Close">×</button>
+          <button class="close-btn" @click="closeDetail" aria-label="Close">x</button>
 
           <div class="detail-header">
-            <span class="detail-type badge">{{ selectedPhoto['Media Type'] }}</span>
-            <span class="detail-date">{{ selectedPhoto.Date }}</span>
+            <span class="detail-type badge">{{ selectedPhoto.mediaType }}</span>
+            <span class="detail-date">{{ selectedPhoto.date }}</span>
           </div>
 
-          <div class="detail-content">
-            <div class="detail-preview">
-              <div class="preview-placeholder">
-                <span>{{ selectedPhoto['Media Type'] === 'Video' ? '🎬' : '🖼️' }}</span>
-              </div>
+          <dl class="detail-info">
+            <div>
+              <dt>Location</dt>
+              <dd>{{ selectedPhoto.location || 'Not included' }}</dd>
             </div>
-
-            <div class="detail-info">
-              <p v-if="selectedPhoto.Location"><strong>Location:</strong> {{ selectedPhoto.Location }}</p>
+            <div>
+              <dt>Download Link</dt>
+              <dd>{{ selectedPhoto.downloadLink || 'Not included' }}</dd>
             </div>
-          </div>
+            <div>
+              <dt>Media Download Url</dt>
+              <dd>{{ selectedPhoto.mediaDownloadUrl || 'Not included' }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
     </Transition>
@@ -116,6 +136,23 @@ function closeDetail() {
 
 .page-subtitle {
   color: var(--text-soft);
+}
+
+.diagnostics-card {
+  margin-bottom: var(--space-lg);
+}
+
+.section-heading {
+  font-size: 1rem;
+  margin-bottom: var(--space-md);
+}
+
+.diagnostics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  color: var(--text-soft);
+  font-size: 0.9rem;
 }
 
 .filters-bar {
@@ -161,7 +198,7 @@ function closeDetail() {
 
 .photos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-md);
 }
 
@@ -186,7 +223,7 @@ function closeDetail() {
 
 .detail-drawer {
   width: 100%;
-  max-width: 400px;
+  max-width: 460px;
   height: 100%;
   border-radius: 0;
   border-left: 1px solid var(--border);
@@ -207,24 +244,17 @@ function closeDetail() {
   background: rgba(255, 255, 255, 0.68);
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
   color: var(--text-h);
-}
-
-.close-btn:hover {
-  background: rgba(89, 69, 48, 0.16);
 }
 
 .detail-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-md);
   margin-bottom: var(--space-lg);
-}
-
-.detail-type {
-  text-transform: capitalize;
 }
 
 .detail-date {
@@ -232,29 +262,30 @@ function closeDetail() {
   font-size: 0.875rem;
 }
 
-.detail-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
+.detail-info {
+  display: grid;
+  gap: var(--space-md);
+  margin: 0;
 }
 
-.preview-placeholder {
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: var(--radius-md);
-  background: linear-gradient(145deg, rgba(243, 203, 69, 0.12), rgba(31, 105, 88, 0.08));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
+.detail-info dt {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.detail-info p {
-  color: var(--text-soft);
-  margin-bottom: var(--space-sm);
+.detail-info dd {
+  margin: 0;
+  color: var(--text);
+  word-break: break-word;
 }
 
-.detail-info strong {
-  color: var(--text-h);
+@media (max-width: 760px) {
+  .diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
+

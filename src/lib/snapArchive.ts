@@ -1,15 +1,19 @@
 import {
   buildSnapZipIndex,
+  findDuplicateSnapZipPaths,
+  findSnapZipEntriesByPrefix,
+  findSnapZipEntryByPath,
   readSnapZipEntryContent,
   type SnapZipIndex,
   type SnapZipSource,
-  type SnapZipEntryMeta,
 } from './snapZip'
 import {
+  type ArchiveCapabilities,
+  type ArchiveDiagnostics,
   type ArchiveMetadata,
-  type Account,
-  type FriendsJson,
 } from '../types'
+import { EXPECTED_SNAPCHAT_JSON_PATHS, SNAPCHAT_JSON_PATHS } from './snapchatArchivePaths'
+import { parseAccountJson, parseFriendsJson } from './snapchatParsers'
 
 export interface ArchiveSession {
   index: SnapZipIndex
@@ -19,14 +23,7 @@ export interface ArchiveSession {
 
 export type ArchiveProgressCallback = (progress: number, status: string) => void
 
-export const SNAP_JSON_PATHS = {
-  account: 'json/account.json',
-  friends: 'json/friends.json',
-  chatHistory: 'json/chat_history.json',
-  snapHistory: 'json/snap_history.json',
-  photosHistory: 'json/photos_history.json',
-  storyHistory: 'json/story_history.json',
-}
+export const SNAP_JSON_PATHS = SNAPCHAT_JSON_PATHS
 
 export class SnapchatArchiveReader {
   readonly index: SnapZipIndex
@@ -36,7 +33,7 @@ export class SnapchatArchiveReader {
   }
 
   async readJsonFile<T>(path: string): Promise<T | null> {
-    const entry = findEntryByPath(this.index, path)
+    const entry = findSnapZipEntryByPath(this.index, path)
     if (!entry) return null
     const content = await readSnapZipEntryContent(this.index, entry.id)
     const buffer = await normalizeContentToArrayBuffer(content)
@@ -57,23 +54,26 @@ export async function createArchiveSession(
   const sources: SnapZipSource[] = files.map((file, index) => ({ id: `source-${index}`, file }))
   const index = await buildSnapZipIndex(sources)
 
-   onProgress?.(30, 'Reading account metadata')
+  onProgress?.(30, 'Reading account metadata')
   const reader = new SnapchatArchiveReader(index)
-  const account = await reader.readJsonFile<Account>(SNAP_JSON_PATHS.account)
+  const account = parseAccountJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.account))
 
   onProgress?.(55, 'Reading friends list')
-  const friendsJson = await reader.readJsonFile<FriendsJson>(SNAP_JSON_PATHS.friends)
-  const friends = friendsJson?.Friends ?? []
+  const friends = parseFriendsJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.friends))
+  const capabilities = buildArchiveCapabilities(index)
+  const diagnostics = buildArchiveDiagnostics(index)
 
   const metadata: ArchiveMetadata = {
-    account: account ?? null,
+    account,
     friends,
+    capabilities,
+    diagnostics,
     stats: {
       friendCount: friends.length,
-      hasChatHistory: Boolean(findEntryByPath(index, SNAP_JSON_PATHS.chatHistory)),
-      hasSnapHistory: Boolean(findEntryByPath(index, SNAP_JSON_PATHS.snapHistory)),
-      hasPhotosHistory: Boolean(findEntryByPath(index, SNAP_JSON_PATHS.photosHistory)),
-      hasStoryHistory: Boolean(findEntryByPath(index, SNAP_JSON_PATHS.storyHistory)),
+      hasChatHistory: capabilities.hasChatHistoryJson,
+      hasSnapHistory: capabilities.hasSnapHistoryJson,
+      hasMemoriesHistory: capabilities.hasMemoriesHistoryJson,
+      hasStoryHistory: capabilities.hasStoryHistoryJson,
     },
   }
 
@@ -86,8 +86,35 @@ export async function createArchiveSession(
   }
 }
 
-function findEntryByPath(index: SnapZipIndex, path: string): SnapZipEntryMeta | undefined {
-  return index.entries.find((entry) => entry.id.path === path)
+function buildArchiveCapabilities(index: SnapZipIndex): ArchiveCapabilities {
+  return {
+    hasAccountJson: hasPath(index, SNAP_JSON_PATHS.account),
+    hasFriendsJson: hasPath(index, SNAP_JSON_PATHS.friends),
+    hasChatHistoryJson: hasPath(index, SNAP_JSON_PATHS.chatHistory),
+    hasSnapHistoryJson: hasPath(index, SNAP_JSON_PATHS.snapHistory),
+    hasStoryHistoryJson: hasPath(index, SNAP_JSON_PATHS.storyHistory),
+    hasMemoriesHistoryJson: hasPath(index, SNAP_JSON_PATHS.memoriesHistory),
+    hasMemoriesDirectory: hasPrefix(index, 'memories/'),
+    hasChatMediaDirectory: hasPrefix(index, 'chat_media/'),
+  }
+}
+
+function buildArchiveDiagnostics(index: SnapZipIndex): ArchiveDiagnostics {
+  const jsonFiles = index.entries
+    .filter((entry) => !entry.isDirectory && entry.id.path.startsWith('json/') && entry.id.path.endsWith('.json'))
+    .map((entry) => entry.id.path)
+    .sort()
+
+  const expectedPaths = new Set<string>(EXPECTED_SNAPCHAT_JSON_PATHS)
+  const mediaEntries = index.entries.filter((entry) => !entry.isDirectory && isMediaPath(entry.id.path))
+
+  return {
+    missingExpectedPaths: EXPECTED_SNAPCHAT_JSON_PATHS.filter((path) => !hasPath(index, path)),
+    unknownJsonFiles: jsonFiles.filter((path) => !expectedPaths.has(path)),
+    mediaCountsByDirectory: countBy(mediaEntries.map((entry) => entry.id.path.split('/')[0] ?? '')),
+    mediaCountsByExtension: countBy(mediaEntries.map((entry) => extensionForPath(entry.id.path))),
+    duplicateEntryPaths: findDuplicateSnapZipPaths(index),
+  }
 }
 
 async function normalizeContentToArrayBuffer(
@@ -100,3 +127,29 @@ async function normalizeContentToArrayBuffer(
   const response = new Response(content)
   return response.arrayBuffer()
 }
+
+function hasPath(index: SnapZipIndex, path: string): boolean {
+  return Boolean(findSnapZipEntryByPath(index, path))
+}
+
+function hasPrefix(index: SnapZipIndex, prefix: string): boolean {
+  return findSnapZipEntriesByPrefix(index, prefix).some((entry) => !entry.isDirectory)
+}
+
+function isMediaPath(path: string): boolean {
+  return path.startsWith('memories/') || path.startsWith('chat_media/')
+}
+
+function extensionForPath(path: string): string {
+  const match = /\.([^.]+)$/.exec(path)
+  return match?.[1]?.toLowerCase() ?? 'unknown'
+}
+
+function countBy(values: string[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const value of values) {
+    counts[value] = (counts[value] ?? 0) + 1
+  }
+  return counts
+}
+
