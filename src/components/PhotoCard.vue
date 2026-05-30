@@ -9,17 +9,7 @@
         {{ formattedDate }}
       </time>
     </div>
-
-    <dl class="photo-meta">
-      <div>
-        <dt>Location</dt>
-        <dd>{{ photo.location || 'Not included' }}</dd>
-      </div>
-      <div>
-        <dt>Download URL</dt>
-        <dd>{{ hasDownloadUrl ? 'Present in metadata' : 'Not included' }}</dd>
-      </div>
-    </dl>
+				<img :src="photo.filepath" width="100%"/>
   </article>
 </template>
 
@@ -31,7 +21,7 @@ const props = defineProps<{
   photo: MemoryRecord
 }>()
 
-const hasDownloadUrl = computed(() => Boolean(props.photo.mediaDownloadUrl || props.photo.downloadLink))
+console.log(props.photo)
 
 const formattedDate = computed(() => {
   const date = new Date(props.photo.date)
