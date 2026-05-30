@@ -5,9 +5,9 @@
             <span class="meta-dot" aria-hidden="true"></span>
             <span class="meta-info">{{ photo.mediaType }}</span>
          </div>
-         <div class="photo-meta">
+         <div v-if="cityName" class="photo-meta">
             <span class="meta-dot" aria-hidden="true"></span>
-            <span class="meta-info">{{ photo.location }}</span>
+            <span class="meta-info">{{ cityName }}</span>
          </div>
          <time :datetime="photo.date" class="photo-date">
             {{ formattedDate }}
@@ -36,6 +36,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import type { MemoryRecord } from "../types";
 import { useArchiveStore } from "../stores/archive";
+import { geocodeLocation } from "../lib/reverseGeocode";
 
 const props = defineProps<{
    photo: MemoryRecord;
@@ -43,9 +44,13 @@ const props = defineProps<{
 
 const archiveStore = useArchiveStore();
 const blobUrl = ref<string | null>(null);
+const cityName = ref<string | null>(null);
 
 onMounted(async () => {
-   blobUrl.value = await archiveStore.resolveMediaUrl(props.photo.filePath);
+   [blobUrl.value, cityName.value] = await Promise.all([
+      archiveStore.resolveMediaUrl(props.photo.filePath),
+      geocodeLocation(props.photo.location),
+   ]);
 });
 
 onUnmounted(() => {
