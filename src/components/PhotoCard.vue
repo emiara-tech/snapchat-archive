@@ -9,19 +9,44 @@
         {{ formattedDate }}
       </time>
     </div>
-				<img :src="photo.filepath" width="100%"/>
+    <video
+      v-if="blobUrl && isVideo"
+      class="photo-media photo-media-video"
+      :src="blobUrl"
+      controls
+      preload="metadata"
+      playsinline
+    />
+    <img
+      v-else-if="blobUrl"
+      class="photo-media"
+      :src="blobUrl"
+      :alt="mediaLabel"
+      loading="lazy"
+    />
+    <div v-else class="photo-media-placeholder">Media unavailable</div>
   </article>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { MemoryRecord } from '../types'
+import { useArchiveStore } from '../stores/archive'
 
 const props = defineProps<{
   photo: MemoryRecord
 }>()
 
-console.log(props.photo)
+const archiveStore = useArchiveStore()
+const blobUrl = ref<string | null>(null)
+
+onMounted(async () => {
+  blobUrl.value = await archiveStore.resolveMediaUrl(props.photo.filePath)
+})
+
+onUnmounted(() => {
+  if (blobUrl.value) URL.revokeObjectURL(blobUrl.value)
+})
 
 const formattedDate = computed(() => {
   const date = new Date(props.photo.date)
@@ -33,9 +58,18 @@ const formattedDate = computed(() => {
   })
 })
 
+const isVideo = computed(() => {
+  return props.photo.mediaType.toLowerCase() === 'video' || props.photo.filePath.toLowerCase().endsWith('.mp4')
+})
+
+const mediaLabel = computed(() => {
+  return `${props.photo.mediaType} memory from ${props.photo.date}`
+})
+
 const photoLabel = computed(() => {
   return `Memory metadata from ${props.photo.date}`
 })
+
 </script>
 
 <style scoped>
@@ -82,6 +116,32 @@ const photoLabel = computed(() => {
   white-space: nowrap;
 }
 
+.photo-media,
+.photo-media-placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.photo-media {
+  display: block;
+  object-fit: cover;
+}
+
+.photo-media-video {
+  background: #000;
+}
+
+.photo-media-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .photo-meta {
   display: grid;
   gap: var(--space-sm);
@@ -108,4 +168,3 @@ const photoLabel = computed(() => {
   word-break: break-word;
 }
 </style>
-

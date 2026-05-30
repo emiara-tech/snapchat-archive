@@ -192,6 +192,10 @@ export const useArchiveStore = defineStore('archive', () => {
 		return result
 	}
 
+	async function resolveMediaUrl(path: string): Promise<string | null> {
+		return archiveSession.value?.reader.readMediaBlob(path) ?? null
+	}
+
 	function setSelectedFiles(files: File[]) {
 		selectedFiles.value = files
 	}
@@ -254,6 +258,7 @@ export const useArchiveStore = defineStore('archive', () => {
 		prepareArchive,
 		loadStats,
 		runAnalyzer,
+		resolveMediaUrl,
 		setSelectedFiles,
 		updateExportConfig,
 		resetArchive,

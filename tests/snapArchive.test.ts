@@ -32,6 +32,24 @@ describe('snapchat archive session', () => {
       memories: 1,
     })
   })
+
+  it('resolves mp4 memories to object URLs', async () => {
+    const file = await createZipFile({
+      'json/account.json': '{"Basic Information":{"Username":"me"}}',
+      'json/friends.json': '{"Friends":[]}',
+      'json/chat_history.json': '{}',
+      'json/snap_history.json': '{}',
+      'json/story_history.json': '{"Your Story Views":[]}',
+      'json/memories_history.json': '{"Saved Media":[]}',
+      'memories/2026-01-01_example-main.mp4': 'video',
+    })
+
+    const session = await createArchiveSession([file])
+    const url = await session.reader.readMediaBlob('memories/2026-01-01_example-main.mp4')
+
+    expect(url).toEqual(expect.stringMatching(/^blob:/))
+    if (url) URL.revokeObjectURL(url)
+  })
 })
 
 async function createZipFile(files: Record<string, string>): Promise<File> {
@@ -42,4 +60,3 @@ async function createZipFile(files: Record<string, string>): Promise<File> {
   const blob = (await writer.close()) as Blob
   return new File([blob], 'snapchat-export.zip', { type: 'application/zip' })
 }
-

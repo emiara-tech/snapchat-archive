@@ -38,6 +38,9 @@ export function parseStoryHistoryJson(value: unknown): StoryHistoryJson | null {
 	} as StoryHistoryJson
 }
 
+/** Parses json of the memories
+ *
+ */
 export function parseMemoriesHistoryJson(value: unknown): MemoryRecord[] {
 	if (!isRecord(value) || !Array.isArray(value['Saved Media'])) return []
 
@@ -50,14 +53,15 @@ function normalizeMemoryRecord(value: unknown): MemoryRecord | null {
 	if (!isRecord(value)) return null
 	const date = readString(value.Date)
 	const mediaType = readString(value['Media Type'])
-	if (!date || !mediaType) return null
+	const filePath = mediaType ? constructFilePath(value, mediaType) : null
+
+	if (!date || !mediaType || !filePath) return null
 
 	return {
 		date,
 		mediaType,
 		location: readString(value.Location),
-		downloadLink: readString(value['Download Link']),
-		mediaDownloadUrl: readString(value['Media Download Url']),
+		filePath,
 	}
 }
 
@@ -85,4 +89,27 @@ function readString(value: unknown): string | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+function constructFilePath(value: Record<string, unknown>, mediaType: string): string | null {
+	const date = readString(value.Date)
+	const downloadLink = readString(value['Download Link'])
+	if (!date || !downloadLink) {
+		console.warn('[snapchat] memory record missing required fields', { date, downloadLink, record: value })
+		return null
+	}
+
+	const dateFormatted = date.slice(0, 10)
+	try {
+		const url = new URL(downloadLink)
+		const mid = url.searchParams.get('mid')
+		if (!mid) {
+			console.warn('[snapchat] memory record Download Link has no "mid" param', { downloadLink, record: value })
+			return null
+		}
+		const extension = mediaType.toLowerCase() === 'video' ? 'mp4' : 'jpg'
+		return `memories/${dateFormatted}_${mid}-main.${extension}`
+	} catch {
+		console.warn('[snapchat] memory record Download Link is not a valid URL', { downloadLink, record: value })
+		return null
+	}
 }

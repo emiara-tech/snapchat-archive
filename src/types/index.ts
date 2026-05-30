@@ -41,7 +41,7 @@ export interface Photo {
 	date: string
 	mediaType: 'Image' | 'Video' | string
 	location: string | null
-	filepath: string
+	filePath: string
 }
 
 export interface PhotosJson {

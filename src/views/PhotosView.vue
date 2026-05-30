@@ -24,6 +24,7 @@ const years = computed(() => {
 })
 
 const filteredPhotos = computed(() => {
+	console.log(archiveStore.memoriesList)
 	return archiveStore.memoriesList
 		.filter((memory) => {
 			if (selectedType.value !== 'all' && memory.mediaType !== selectedType.value) return false
@@ -53,10 +54,7 @@ function closeDetail() {
 				<span class="eyebrow">Memories metadata</span>
 				<h1>Review what Snapchat says is in Memories.</h1>
 				<p class="page-subtitle">
-					{{ filteredPhotos.length }} metadata records in the current filter set. Media rendering is not
-					implemented in
-					this pass.
-				</p>
+					{{ filteredPhotos.length }} metadata records in the current filter set. 				</p>
 			</header>
 
 			<section class="card diagnostics-card">
@@ -119,11 +117,7 @@ function closeDetail() {
 						</div>
 						<div>
 							<dt>Download Link</dt>
-							<dd>{{ selectedPhoto.downloadLink || 'Not included' }}</dd>
-						</div>
-						<div>
-							<dt>Media Download Url</dt>
-							<dd>{{ selectedPhoto.mediaDownloadUrl || 'Not included' }}</dd>
+							<dd>{{ selectedPhoto.filePath || 'Not included' }}</dd>
 						</div>
 					</dl>
 				</div>
@@ -206,7 +200,7 @@ function closeDetail() {
 .photos-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-	gap: var(--space-md);
+	gap: var(--space-md) - 200;
 }
 
 .empty-state {

@@ -40,6 +40,14 @@ export class SnapchatArchiveReader {
     const text = new TextDecoder('utf-8').decode(buffer)
     return JSON.parse(text) as T
   }
+
+  async readMediaBlob(path: string): Promise<string | null> {
+    const entry = findSnapZipEntryByPath(this.index, path)
+    if (!entry) return null
+    const content = await readSnapZipEntryContent(this.index, entry.id)
+    const buffer = await normalizeContentToArrayBuffer(content)
+    return URL.createObjectURL(new Blob([buffer], { type: mimeTypeForPath(path) }))
+  }
 }
 
 export async function createArchiveSession(
@@ -145,6 +153,14 @@ function extensionForPath(path: string): string {
   return match?.[1]?.toLowerCase() ?? 'unknown'
 }
 
+function mimeTypeForPath(path: string): string {
+  const extension = extensionForPath(path)
+  if (extension === 'mp4') return 'video/mp4'
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg'
+  if (extension === 'png') return 'image/png'
+  return 'application/octet-stream'
+}
+
 function countBy(values: string[]): Record<string, number> {
   const counts: Record<string, number> = {}
   for (const value of values) {
@@ -152,4 +168,3 @@ function countBy(values: string[]): Record<string, number> {
   }
   return counts
 }
-
