@@ -1,9 +1,13 @@
 <template>
    <article class="photo-card card" :aria-label="photoLabel">
       <div class="photo-header">
-         <div class="photo-type">
-            <span class="type-dot" aria-hidden="true"></span>
-            <span class="type-label">{{ photo.mediaType }}</span>
+         <div class="photo-meta">
+            <span class="meta-dot" aria-hidden="true"></span>
+            <span class="meta-info">{{ photo.mediaType }}</span>
+         </div>
+         <div class="photo-meta">
+            <span class="meta-dot" aria-hidden="true"></span>
+            <span class="meta-info">{{ photo.location }}</span>
          </div>
          <time :datetime="photo.date" class="photo-date">
             {{ formattedDate }}
@@ -97,7 +101,7 @@ const photoLabel = computed(() => {
    gap: var(--space-md);
 }
 
-.photo-type {
+.photo-meta {
    display: flex;
    align-items: center;
    gap: var(--space-xs);
@@ -106,7 +110,7 @@ const photoLabel = computed(() => {
    text-transform: capitalize;
 }
 
-.type-dot {
+.meta-dot {
    width: 9px;
    height: 9px;
    border-radius: 50%;
