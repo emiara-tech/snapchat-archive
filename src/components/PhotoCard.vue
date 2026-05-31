@@ -1,10 +1,6 @@
 <template>
    <article class="photo-card card" :aria-label="photoLabel">
       <div class="photo-header">
-         <div class="photo-meta">
-            <span class="meta-dot" aria-hidden="true"></span>
-            <span class="meta-info">{{ photo.mediaType }}</span>
-         </div>
          <div v-if="cityName" class="photo-meta">
             <span class="meta-dot" aria-hidden="true"></span>
             <span class="meta-info">{{ cityName }}</span>
