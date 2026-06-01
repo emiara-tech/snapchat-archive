@@ -53,15 +53,17 @@ function normalizeMemoryRecord(value: unknown): MemoryRecord | null {
 	if (!isRecord(value)) return null
 	const date = readString(value.Date)
 	const mediaType = readString(value['Media Type'])
-	const filePath = mediaType ? constructFilePath(value, mediaType) : null
+	const mainFilePath = mediaType ? constructFilePath(value, mediaType, "main") : null
+	const overlayFilePath = mediaType ? constructFilePath(value, mediaType, "overlay") : null
 
-	if (!date || !mediaType || !filePath) return null
+	if (!date || !mediaType || !mainFilePath) return null
 
 	return {
 		date,
 		mediaType,
 		location: readString(value.Location),
-		filePath,
+		mainFilePath: mainFilePath,
+		overlayFilePath: overlayFilePath
 	}
 }
 
@@ -90,7 +92,7 @@ function readString(value: unknown): string | null {
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-function constructFilePath(value: Record<string, unknown>, mediaType: string): string | null {
+function constructFilePath(value: Record<string, unknown>, mediaType: string, type: string): string | null {
 	const date = readString(value.Date)
 	const downloadLink = readString(value['Download Link'])
 	if (!date || !downloadLink) {
@@ -107,7 +109,7 @@ function constructFilePath(value: Record<string, unknown>, mediaType: string): s
 			return null
 		}
 		const extension = mediaType.toLowerCase() === 'video' ? 'mp4' : 'jpg'
-		return `memories/${dateFormatted}_${mid}-main.${extension}`
+		return `memories/${dateFormatted}_${mid}-${type}.${extension}`
 	} catch {
 		console.warn('[snapchat] memory record Download Link is not a valid URL', { downloadLink, record: value })
 		return null

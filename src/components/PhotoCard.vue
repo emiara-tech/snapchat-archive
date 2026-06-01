@@ -44,7 +44,7 @@ const cityName = ref<string | null>(null);
 
 onMounted(async () => {
    [blobUrl.value, cityName.value] = await Promise.all([
-      archiveStore.resolveMediaUrl(props.photo.filePath),
+      archiveStore.resolveMediaUrl(props.photo.mainFilePath),
       geocodeLocation(props.photo.location),
    ]);
 });
@@ -66,7 +66,7 @@ const formattedDate = computed(() => {
 const isVideo = computed(() => {
    return (
       props.photo.mediaType.toLowerCase() === "video" ||
-      props.photo.filePath.toLowerCase().endsWith(".mp4")
+      props.photo.mainFilePath.toLowerCase().endsWith(".mp4")
    );
 });
 
