@@ -193,6 +193,7 @@ export const useArchiveStore = defineStore('archive', () => {
 	}
 
 	async function resolveMediaUrl(path: string): Promise<string | null> {
+		console.log("ResolveMediaUrl:", path);
 		return archiveSession.value?.reader.readMediaBlob(path) ?? null
 	}
 

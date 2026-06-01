@@ -9,22 +9,32 @@
             {{ formattedDate }}
          </time>
       </div>
-      <video
-         v-if="blobUrl && isVideo"
-         class="photo-media photo-media-video"
-         :src="blobUrl"
-         controls
-         preload="metadata"
-         playsinline
-      />
-      <img
-         v-else-if="blobUrl"
-         class="photo-media"
-         :src="blobUrl"
-         :alt="mediaLabel"
-         loading="lazy"
-      />
-      <div v-else class="photo-media-placeholder">Media unavailable</div>
+      <div class="photo-media-wrapper">
+         <video
+            v-if="mainBlobUrl && isVideo"
+            class="photo-media photo-media-video"
+            :src="mainBlobUrl"
+            controls
+            preload="metadata"
+            :alt="mediaLabel"
+            playsinline
+         />
+         <img
+            v-else-if="mainBlobUrl"
+            class="photo-media"
+            :src="mainBlobUrl"
+            :alt="mediaLabel"
+            loading="lazy"
+         />
+         <div v-else class="photo-media-placeholder">Media unavailable</div>
+         <img
+            v-if="overlayBlobUrl"
+            class="photo-overlay"
+            :src="overlayBlobUrl"
+            alt=""
+            aria-hidden="true"
+         />
+      </div>
    </article>
 </template>
 
@@ -39,18 +49,22 @@ const props = defineProps<{
 }>();
 
 const archiveStore = useArchiveStore();
-const blobUrl = ref<string | null>(null);
+const mainBlobUrl = ref<string | null>(null);
+const overlayBlobUrl = ref<string | null>(null);
 const cityName = ref<string | null>(null);
 
 onMounted(async () => {
-   [blobUrl.value, cityName.value] = await Promise.all([
-      archiveStore.resolveMediaUrl(props.photo.mainFilePath),
+   const { mainFilePath, overlayFilePath } = props.photo;
+   [mainBlobUrl.value, overlayBlobUrl.value, cityName.value] = await Promise.all([
+      archiveStore.resolveMediaUrl(mainFilePath),
+      overlayFilePath ? archiveStore.resolveMediaUrl(overlayFilePath) : Promise.resolve(null),
       geocodeLocation(props.photo.location),
    ]);
 });
 
 onUnmounted(() => {
-   if (blobUrl.value) URL.revokeObjectURL(blobUrl.value);
+   if (mainBlobUrl.value) URL.revokeObjectURL(mainBlobUrl.value);
+   if (overlayBlobUrl.value) URL.revokeObjectURL(overlayBlobUrl.value);
 });
 
 const formattedDate = computed(() => {
@@ -63,12 +77,11 @@ const formattedDate = computed(() => {
    });
 });
 
-const isVideo = computed(() => {
-   return (
+const isVideo = computed(
+   () =>
       props.photo.mediaType.toLowerCase() === "video" ||
-      props.photo.mainFilePath.toLowerCase().endsWith(".mp4")
-   );
-});
+      props.photo.mainFilePath.toLowerCase().endsWith(".mp4"),
+);
 
 const mediaLabel = computed(() => {
    return `${props.photo.mediaType} memory from ${props.photo.date}`;
@@ -77,6 +90,8 @@ const mediaLabel = computed(() => {
 const photoLabel = computed(() => {
    return `Memory metadata from ${props.photo.date}`;
 });
+
+
 </script>
 
 <style scoped>
@@ -124,6 +139,10 @@ const photoLabel = computed(() => {
    white-space: nowrap;
 }
 
+.photo-media-wrapper {
+   position: relative;
+}
+
 .photo-media,
 .photo-media-placeholder {
    width: 100%;
@@ -135,6 +154,15 @@ const photoLabel = computed(() => {
 .photo-media {
    display: block;
    object-fit: cover;
+}
+
+.photo-overlay {
+   position: absolute;
+   inset: 0;
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   pointer-events: none;
 }
 
 .photo-media-video {

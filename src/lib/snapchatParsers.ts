@@ -108,7 +108,7 @@ function constructFilePath(value: Record<string, unknown>, mediaType: string, ty
 			console.warn('[snapchat] memory record Download Link has no "mid" param', { downloadLink, record: value })
 			return null
 		}
-		const extension = mediaType.toLowerCase() === 'video' ? 'mp4' : 'jpg'
+		const extension = type === 'overlay' ? 'png' : (mediaType.toLowerCase() === 'video' ? 'mp4' : 'jpg')
 		return `memories/${dateFormatted}_${mid}-${type}.${extension}`
 	} catch {
 		console.warn('[snapchat] memory record Download Link is not a valid URL', { downloadLink, record: value })

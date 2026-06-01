@@ -42,7 +42,7 @@ export interface Photo {
 	mediaType: 'Image' | 'Video' | string
 	location: string | null
 	mainFilePath: string
-	overlayFilePath: string
+	overlayFilePath: string | null
 }
 
 export interface PhotosJson {
