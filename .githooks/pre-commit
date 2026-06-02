@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+echo "Running compile check before commit..."
+pnpm run build
