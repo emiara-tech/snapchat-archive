@@ -55,9 +55,7 @@
                :aria-label="playLabel"
                @click.stop="togglePlay"
             >
-               <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 5v14l11-7z" />
-               </svg>
+               <Play fill="currentColor" aria-hidden="true" />
             </button>
 
             <div class="video-controls" @click.stop>
@@ -67,12 +65,8 @@
                   :aria-label="playLabel"
                   @click="togglePlay"
                >
-                  <svg v-if="isPlaying" viewBox="0 0 24 24" aria-hidden="true">
-                     <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-                  </svg>
-                  <svg v-else viewBox="0 0 24 24" aria-hidden="true">
-                     <path d="M8 5v14l11-7z" />
-                  </svg>
+                  <Pause v-if="isPlaying" fill="currentColor" aria-hidden="true" />
+                  <Play v-else fill="currentColor" aria-hidden="true" />
                </button>
 
                <input
@@ -98,33 +92,8 @@
                   :aria-label="muteLabel"
                   @click="toggleMute"
                >
-                  <svg
-                     v-if="!isMuted && volume > 0"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true"
-                  >
-                     <path d="M11 5 6 9H2v6h4l5 4z" />
-                     <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-                     <path d="M18.5 5.5a9 9 0 0 1 0 13" />
-                  </svg>
-                  <svg
-                     v-else
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true"
-                  >
-                     <path d="M11 5 6 9H2v6h4l5 4z" />
-                     <path d="M22 9l-6 6M16 9l6 6" />
-                  </svg>
+                  <Volume2 v-if="!isMuted && volume > 0" aria-hidden="true" />
+                  <VolumeX v-else aria-hidden="true" />
                </button>
 
                <input
@@ -146,30 +115,8 @@
                   :aria-label="fullscreenLabel"
                   @click="toggleFullscreen"
                >
-                  <svg
-                     v-if="!isFullscreen"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true"
-                  >
-                     <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-                  </svg>
-                  <svg
-                     v-else
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     aria-hidden="true"
-                  >
-                     <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-                  </svg>
+                  <Maximize v-if="!isFullscreen" aria-hidden="true" />
+                  <Minimize v-else aria-hidden="true" />
                </button>
             </div>
          </template>
@@ -182,6 +129,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import type { MemoryRecord } from "../types";
 import { useArchiveStore } from "../stores/archive";
 import { geocodeLocation } from "../lib/reverseGeocode";
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from "@lucide/vue";
 
 const props = defineProps<{
    photo: MemoryRecord;
@@ -427,7 +375,6 @@ const photoLabel = computed(() => {
    width: 26px;
    height: 26px;
    margin-left: 2px;
-   fill: currentColor;
 }
 
 .play-badge:hover {
@@ -471,7 +418,6 @@ const photoLabel = computed(() => {
 .ctrl-btn svg {
    width: 18px;
    height: 18px;
-   fill: currentColor;
 }
 
 .ctrl-btn:hover {

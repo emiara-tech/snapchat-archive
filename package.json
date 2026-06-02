@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@lucide/vue": "^1.17.0",
     "@vueuse/core": "^14.2.1",
     "@zip.js/zip.js": "^2.8.26",
     "cities.json": "^1.1.58",
