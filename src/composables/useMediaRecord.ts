@@ -1,12 +1,9 @@
 import { onUnmounted, ref, watch } from "vue";
 import { geocodeLocation } from "../lib/reverseGeocode";
 import { useArchiveStore } from "../stores/archive";
+import type { MediaRecord } from "../types";
 
-interface MediaRecordSource {
-   mainFilePath: string;
-   overlayFilePath: string | null;
-   location: string | null;
-}
+type MediaRecordSource = Pick<MediaRecord, "mainFilePath" | "overlayFilePath" | "location">;
 
 export function useMediaRecord(getRecord: () => MediaRecordSource) {
    const archiveStore = useArchiveStore();

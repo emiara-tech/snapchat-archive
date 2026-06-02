@@ -37,7 +37,7 @@ export interface SnapEntry {
 
 export type SnapHistory = Record<string, SnapEntry[]>
 
-export interface Photo {
+export interface MediaRecord {
 	date: string
 	mediaType: 'Image' | 'Video' | string
 	location: string | null
@@ -45,12 +45,9 @@ export interface Photo {
 	overlayFilePath: string | null
 }
 
-export interface PhotosJson {
-	"Saved Media": Photo[]
+export interface SavedMediaJson {
+	"Saved Media": MediaRecord[]
 }
-
-export type MemoryRecord = Photo
-export type MemoriesHistoryJson = PhotosJson
 
 export interface Story {
 	"Story Date": string
@@ -155,6 +152,6 @@ export interface ExportConfig {
 export type { Friend as SnapchatFriendRecord }
 export type { ChatMessage as SnapchatChatMessageRecord }
 export type { SnapEntry as SnapchatSnapHistoryEntry }
-export type { Photo as SnapchatPhotoRecord }
+export type { MediaRecord as SnapchatSavedMediaRecord }
 export type { Story as SnapchatStoryHistoryRecord }
 export type { Account as SnapchatAccountJson }

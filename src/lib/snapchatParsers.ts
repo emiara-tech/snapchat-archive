@@ -2,8 +2,8 @@ import type {
 	Account,
 	ChatHistory,
 	Friend,
-	MemoriesHistoryJson,
-	MemoryRecord,
+	MediaRecord,
+	SavedMediaJson,
 	SnapHistory,
 	StoryHistoryJson,
 } from '../types'
@@ -41,15 +41,15 @@ export function parseStoryHistoryJson(value: unknown): StoryHistoryJson | null {
 /** Parses json of the memories
  *
  */
-export function parseMemoriesHistoryJson(value: unknown): MemoryRecord[] {
+export function parseMemoriesHistoryJson(value: unknown): MediaRecord[] {
 	if (!isRecord(value) || !Array.isArray(value['Saved Media'])) return []
 
-	return (value as unknown as MemoriesHistoryJson)['Saved Media']
-		.map(normalizeMemoryRecord)
-		.filter((memory): memory is MemoryRecord => memory !== null)
+	return (value as unknown as SavedMediaJson)['Saved Media']
+		.map(normalizeMediaRecord)
+		.filter((memory): memory is MediaRecord => memory !== null)
 }
 
-function normalizeMemoryRecord(value: unknown): MemoryRecord | null {
+function normalizeMediaRecord(value: unknown): MediaRecord | null {
 	if (!isRecord(value)) return null
 	const date = readString(value.Date)
 	const mediaType = readString(value['Media Type'])

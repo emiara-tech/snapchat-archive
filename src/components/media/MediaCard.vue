@@ -21,25 +21,16 @@
    </MediaCardShell>
 </template>
 
-<script lang="ts">
-export interface MediaCardRecord {
-   date: string;
-   mediaType: string;
-   location: string | null;
-   mainFilePath: string;
-   overlayFilePath: string | null;
-}
-</script>
-
 <script setup lang="ts">
 import { computed } from "vue";
 import { useMediaRecord } from "../../composables/useMediaRecord";
+import type { MediaRecord } from "../../types";
 import ImageMediaCard from "./ImageMediaCard.vue";
 import MediaCardShell from "./MediaCardShell.vue";
 import VideoMediaCard from "./VideoMediaCard.vue";
 
 const props = defineProps<{
-   record: MediaCardRecord;
+   record: MediaRecord;
 }>();
 
 const emit = defineEmits<{

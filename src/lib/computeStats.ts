@@ -5,7 +5,7 @@ import type {
   StoryHistoryJson,
   ComputedArchiveStats,
   TopFriendEntry,
-  MemoryRecord,
+  MediaRecord,
 } from '../types'
 
 export interface ComputeStatsInput {
@@ -13,7 +13,7 @@ export interface ComputeStatsInput {
   snapHistory: SnapHistory | null
   chatHistory: ChatHistory | null
   storyHistory: StoryHistoryJson | null
-  memories: MemoryRecord[]
+  memories: MediaRecord[]
   indexedMediaBytes?: number
 }
 
@@ -49,7 +49,7 @@ function computeDateRange(input: {
   snapHistory: SnapHistory | null
   chatHistory: ChatHistory | null
   storyHistory: StoryHistoryJson | null
-  memories: MemoryRecord[]
+  memories: MediaRecord[]
 }): { start: string; end: string } {
   const days: string[] = []
 
@@ -163,4 +163,3 @@ function formatBytes(bytes: number): string {
   const value = bytes / 1024 ** exponent
   return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`
 }
-

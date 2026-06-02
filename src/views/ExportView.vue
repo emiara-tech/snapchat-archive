@@ -21,7 +21,7 @@ function downloadMetadataJson() {
       capabilities: archiveStore.archiveCapabilities,
       diagnostics: archiveStore.archiveDiagnostics,
       stats: archiveStore.archiveStats,
-      memories: archiveStore.memoriesList,
+      memories: archiveStore.mediaRecords,
       chats: config.value.includeChats ? archiveStore.chatHistory : undefined,
       snaps: config.value.includeSnaps ? archiveStore.snapHistory : undefined,
       stories: config.value.includeStories

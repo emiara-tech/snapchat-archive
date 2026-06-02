@@ -2,24 +2,24 @@
 
 import { describe, expect, it } from 'vitest'
 import { computeStats } from '../src/lib/computeStats'
-import type { ChatHistory, MemoryRecord } from '../src/types'
+import type { ChatHistory, MediaRecord } from '../src/types'
 
 describe('computeStats', () => {
   it('uses dated archive records for range and memory counts', () => {
-    const memories: MemoryRecord[] = [
+    const memories: MediaRecord[] = [
       {
         date: '2020-01-02 10:00:00 UTC',
         mediaType: 'Image',
         location: null,
-        downloadLink: null,
-        mediaDownloadUrl: null,
+        mainFilePath: 'memories/2020-01-02_image-main.jpg',
+        overlayFilePath: 'memories/2020-01-02_image-overlay.png',
       },
       {
         date: '2020-01-05 10:00:00 UTC',
         mediaType: 'Video',
         location: null,
-        downloadLink: null,
-        mediaDownloadUrl: null,
+        mainFilePath: 'memories/2020-01-05_video-main.mp4',
+        overlayFilePath: null,
       },
     ]
 
@@ -66,4 +66,3 @@ describe('computeStats', () => {
     expect(stats.totalIndexedMediaSize).toBe('1.5 KB')
   })
 })
-

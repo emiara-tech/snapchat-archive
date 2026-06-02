@@ -7,7 +7,7 @@ import type {
 	ComputedArchiveStats,
 	ExportConfig,
 	Friend,
-	MemoryRecord,
+	MediaRecord,
 	SnapHistory,
 	Story,
 } from '../types'
@@ -59,7 +59,7 @@ export const useArchiveStore = defineStore('archive', () => {
 	const friendsList = ref<Friend[]>([])
 	const chatHistory = ref<ChatHistory | null>(null)
 	const snapHistory = ref<SnapHistory | null>(null)
-	const memoriesList = ref<MemoryRecord[]>([])
+	const mediaRecords = ref<MediaRecord[]>([])
 	const storiesList = ref<Story[]>([])
 	const archiveStats = ref<ComputedArchiveStats | null>(null)
 	const archiveCapabilities = ref<ArchiveCapabilities>({ ...EMPTY_CAPABILITIES })
@@ -80,9 +80,9 @@ export const useArchiveStore = defineStore('archive', () => {
 
 	const importedDate = ref<string | null>(null)
 
-	const totalMemories = computed(() => memoriesList.value.length)
+	const totalMemories = computed(() => mediaRecords.value.length)
 	const totalPhotos = totalMemories
-	const photosList = memoriesList
+	const memoriesList = mediaRecords
 	const totalFriends = computed(() => friendsList.value.length)
 	const totalChats = computed(() => {
 		if (!chatHistory.value) return 0
@@ -151,7 +151,7 @@ export const useArchiveStore = defineStore('archive', () => {
 
 			updateProgress(75, 'Loading memories metadata')
 			const memories = parseMemoriesHistoryJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.memoriesHistory))
-			memoriesList.value = memories
+			mediaRecords.value = memories
 
 			updateProgress(90, 'Computing stats')
 			archiveStats.value = computeStats({
@@ -215,7 +215,7 @@ export const useArchiveStore = defineStore('archive', () => {
 		friendsList.value = []
 		chatHistory.value = null
 		snapHistory.value = null
-		memoriesList.value = []
+		mediaRecords.value = []
 		storiesList.value = []
 		archiveStats.value = null
 		archiveCapabilities.value = { ...EMPTY_CAPABILITIES }
@@ -237,8 +237,8 @@ export const useArchiveStore = defineStore('archive', () => {
 		statsError, friendsList,
 		chatHistory,
 		snapHistory,
+		mediaRecords,
 		memoriesList,
-		photosList,
 		storiesList,
 		archiveStats,
 		archiveCapabilities,

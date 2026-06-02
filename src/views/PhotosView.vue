@@ -2,18 +2,18 @@
 import { computed, onMounted, ref } from "vue";
 import { useArchiveStore } from "../stores/archive";
 import MediaCard from "../components/media/MediaCard.vue";
-import type { MemoryRecord } from "../types";
+import type { MediaRecord } from "../types";
 
 const archiveStore = useArchiveStore();
 
 const selectedType = ref<string>("all");
 const selectedYear = ref<string>("all");
-const selectedPhoto = ref<MemoryRecord | null>(null);
+const selectedPhoto = ref<MediaRecord | null>(null);
 
 const types = computed(() => {
    const typeSet = new Set(
-      archiveStore.memoriesList
-         .map((memory) => memory.mediaType)
+      archiveStore.mediaRecords
+         .map((record) => record.mediaType)
          .filter(Boolean),
    );
    return ["all", ...Array.from(typeSet).sort()];
@@ -21,24 +21,24 @@ const types = computed(() => {
 
 const years = computed(() => {
    const yearSet = new Set<string>();
-   archiveStore.memoriesList.forEach((memory) => {
-      if (memory.date.length >= 4) yearSet.add(memory.date.substring(0, 4));
+   archiveStore.mediaRecords.forEach((record) => {
+      if (record.date.length >= 4) yearSet.add(record.date.substring(0, 4));
    });
    return ["all", ...Array.from(yearSet).sort().reverse()];
 });
 
 const filteredPhotos = computed(() => {
-   console.log(archiveStore.memoriesList);
-   return archiveStore.memoriesList
-      .filter((memory) => {
+   console.log(archiveStore.mediaRecords);
+   return archiveStore.mediaRecords
+      .filter((record) => {
          if (
             selectedType.value !== "all" &&
-            memory.mediaType !== selectedType.value
+            record.mediaType !== selectedType.value
          )
             return false;
          if (
             selectedYear.value !== "all" &&
-            !memory.date.startsWith(selectedYear.value)
+            !record.date.startsWith(selectedYear.value)
          )
             return false;
          return true;
@@ -50,7 +50,7 @@ onMounted(() => {
    archiveStore.loadStats();
 });
 
-function selectPhoto(photo: MemoryRecord) {
+function selectPhoto(photo: MediaRecord) {
    selectedPhoto.value = photo;
 }
 

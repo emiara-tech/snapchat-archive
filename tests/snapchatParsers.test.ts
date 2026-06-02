@@ -47,25 +47,29 @@ describe('snapchat parsers', () => {
         date: '2026-03-21 09:12:33 UTC',
         mediaType: 'Image',
         location: 'Latitude, Longitude: 59.91387, 10.75225',
-        filePath: 'memories/2026-03-21_image-mid-main.jpg',
+        mainFilePath: 'memories/2026-03-21_image-mid-main.jpg',
+        overlayFilePath: 'memories/2026-03-21_image-mid-overlay.png',
       },
       {
         date: '2026-03-22 18:47:05 UTC',
         mediaType: 'Video',
         location: null,
-        filePath: 'memories/2026-03-22_video-mid-main.mp4',
+        mainFilePath: 'memories/2026-03-22_video-mid-main.mp4',
+        overlayFilePath: 'memories/2026-03-22_video-mid-overlay.png',
       },
       {
         date: '2026-03-23 18:47:05 UTC',
         mediaType: 'vIdEo',
         location: null,
-        filePath: 'memories/2026-03-23_mixed-case-video-mid-main.mp4',
+        mainFilePath: 'memories/2026-03-23_mixed-case-video-mid-main.mp4',
+        overlayFilePath: 'memories/2026-03-23_mixed-case-video-mid-overlay.png',
       },
       {
         date: '2026-03-24 18:47:05 UTC',
         mediaType: 'AR_UNKNOWN',
         location: null,
-        filePath: 'memories/2026-03-24_unknown-mid-main.jpg',
+        mainFilePath: 'memories/2026-03-24_unknown-mid-main.jpg',
+        overlayFilePath: 'memories/2026-03-24_unknown-mid-overlay.png',
       },
     ])
   })
