@@ -81,8 +81,6 @@ export const useArchiveStore = defineStore('archive', () => {
 	const importedDate = ref<string | null>(null)
 
 	const totalMemories = computed(() => mediaRecords.value.length)
-	const totalPhotos = totalMemories
-	const memoriesList = mediaRecords
 	const totalFriends = computed(() => friendsList.value.length)
 	const totalChats = computed(() => {
 		if (!chatHistory.value) return 0
@@ -193,7 +191,6 @@ export const useArchiveStore = defineStore('archive', () => {
 	}
 
 	async function resolveMediaUrl(path: string): Promise<string | null> {
-		console.log("ResolveMediaUrl:", path);
 		return archiveSession.value?.reader.readMediaBlob(path) ?? null
 	}
 
@@ -234,11 +231,11 @@ export const useArchiveStore = defineStore('archive', () => {
 		processingProgress,
 		processingStatus,
 		importError,
-		statsError, friendsList,
+		statsError,
+		friendsList,
 		chatHistory,
 		snapHistory,
 		mediaRecords,
-		memoriesList,
 		storiesList,
 		archiveStats,
 		archiveCapabilities,
@@ -250,7 +247,6 @@ export const useArchiveStore = defineStore('archive', () => {
 		selectedFiles,
 		importedDate,
 		totalMemories,
-		totalPhotos,
 		totalFriends,
 		totalChats,
 		startProcessing,

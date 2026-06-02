@@ -134,9 +134,6 @@ export interface ComputedArchiveStats {
 	totalIndexedMediaSize: string
 }
 
-// Legacy alias kept to avoid breaking imports during migration
-export type ArchiveStats = ComputedArchiveStats
-
 export interface ExportConfig {
 	includeSnaps: boolean
 	includeChats: boolean
@@ -149,9 +146,3 @@ export interface ExportConfig {
 	}
 }
 
-export type { Friend as SnapchatFriendRecord }
-export type { ChatMessage as SnapchatChatMessageRecord }
-export type { SnapEntry as SnapchatSnapHistoryEntry }
-export type { MediaRecord as SnapchatSavedMediaRecord }
-export type { Story as SnapchatStoryHistoryRecord }
-export type { Account as SnapchatAccountJson }

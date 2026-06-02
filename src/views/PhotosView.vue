@@ -28,7 +28,6 @@ const years = computed(() => {
 });
 
 const filteredPhotos = computed(() => {
-   console.log(archiveStore.mediaRecords);
    return archiveStore.mediaRecords
       .filter((record) => {
          if (
