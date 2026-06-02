@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useArchiveStore } from "../stores/archive";
-import PhotoCard from "../components/PhotoCard.vue";
+import MediaCard from "../components/media/MediaCard.vue";
 import type { MemoryRecord } from "../types";
 
 const archiveStore = useArchiveStore();
@@ -130,10 +130,10 @@ function closeDetail() {
          </div>
 
          <div class="photos-grid" v-if="filteredPhotos.length > 0">
-            <PhotoCard
+            <MediaCard
                v-for="(photo, index) in filteredPhotos"
                :key="`${photo.date}-${index}`"
-               :photo="photo"
+               :record="photo"
                @click="selectPhoto(photo)"
             />
          </div>
