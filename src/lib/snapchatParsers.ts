@@ -96,7 +96,7 @@ function constructFilePath(value: Record<string, unknown>, mediaType: string, ty
 	const date = readString(value.Date)
 	const downloadLink = readString(value['Download Link'])
 	if (!date || !downloadLink) {
-		console.warn('[snapchat] memory record missing required fields', { date, downloadLink, record: value })
+		console.warn('[archive] memory record missing required fields', { date, downloadLink, record: value })
 		return null
 	}
 
@@ -105,13 +105,13 @@ function constructFilePath(value: Record<string, unknown>, mediaType: string, ty
 		const url = new URL(downloadLink)
 		const mid = url.searchParams.get('mid')
 		if (!mid) {
-			console.warn('[snapchat] memory record Download Link has no "mid" param', { downloadLink, record: value })
+			console.warn('[archive] memory record Download Link has no "mid" param', { downloadLink, record: value })
 			return null
 		}
 		const extension = type === 'overlay' ? 'png' : (mediaType.toLowerCase() === 'video' ? 'mp4' : 'jpg')
 		return `memories/${dateFormatted}_${mid}-${type}.${extension}`
 	} catch {
-		console.warn('[snapchat] memory record Download Link is not a valid URL', { downloadLink, record: value })
+		console.warn('[archive] memory record Download Link is not a valid URL', { downloadLink, record: value })
 		return null
 	}
 }

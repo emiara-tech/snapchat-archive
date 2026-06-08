@@ -48,10 +48,10 @@ onMounted(() => {
             </div>
 
             <span class="eyebrow">Private processing</span>
-            <h1>Building your Snapchat recap.</h1>
+            <h1>Building your archive recap.</h1>
             <p class="processing-subtitle">
                The flow opens the takeout locally, indexes the archive paths,
-               and detects which Snapchat export files are actually present.
+               and detects which export files are actually present.
             </p>
 
             <div class="progress-container">

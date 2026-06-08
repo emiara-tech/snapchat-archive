@@ -135,7 +135,7 @@ export const useArchiveStore = defineStore('archive', () => {
 		const { reader, metadata, index } = archiveSession.value
 
 		try {
-			updateProgress(10, 'Loading snap history')
+			updateProgress(10, 'Loading archive history')
 			const snap = parseSnapHistoryJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.snapHistory))
 			snapHistory.value = snap
 

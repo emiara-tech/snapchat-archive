@@ -44,7 +44,7 @@ export class ZipSourceNotFoundError extends Error {
   readonly sourceId: SnapZipSourceId
 
   constructor(sourceId: SnapZipSourceId) {
-    super(`Snap ZIP source not found: ${sourceId}`)
+    super(`Archive ZIP source not found: ${sourceId}`)
     this.name = 'ZipSourceNotFoundError'
     this.sourceId = sourceId
   }
@@ -54,7 +54,7 @@ export class SnapZipEntryNotFoundError extends Error {
   readonly entryId: SnapZipEntryId
 
   constructor(entryId: SnapZipEntryId) {
-    super(`Snap ZIP entry not found: ${entryId.sourceId}/${entryId.path}`)
+    super(`Archive ZIP entry not found: ${entryId.sourceId}/${entryId.path}`)
     this.name = 'SnapZipEntryNotFoundError'
     this.entryId = entryId
   }
@@ -64,7 +64,7 @@ export class SnapZipEntryIsDirectoryError extends Error {
   readonly entryId: SnapZipEntryId
 
   constructor(entryId: SnapZipEntryId) {
-    super(`Snap ZIP entry is a directory: ${entryId.sourceId}/${entryId.path}`)
+    super(`Archive ZIP entry is a directory: ${entryId.sourceId}/${entryId.path}`)
     this.name = 'SnapZipEntryIsDirectoryError'
     this.entryId = entryId
   }

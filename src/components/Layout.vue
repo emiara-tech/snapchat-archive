@@ -45,7 +45,7 @@ function resetArchive() {
             <router-link to="/" class="logo">
                <span class="logo-mark" aria-hidden="true">GS</span>
                <span class="logo-text">
-                  <strong>Goodbye Snapchat</strong>
+                  <strong>Goodbye Chat</strong>
                   <small>Local takeout recap</small>
                </span>
             </router-link>
@@ -120,10 +120,14 @@ function resetArchive() {
       <footer class="footer">
          <div class="footer-inner">
             <div class="footer-brand">
-               <span class="footer-eyebrow">Goodbye Snapchat</span>
+               <span class="footer-eyebrow">Goodbye Chat</span>
                <p class="footer-tagline">
                   Review your takeout locally, inspect detected metadata, and
                   export a JSON record you control.
+               </p>
+               <p class="footer-disclaimer">
+                  Independent tool. Not affiliated with, endorsed by, or
+                  sponsored by the platform that produced the archive.
                </p>
             </div>
             <nav class="footer-nav">
@@ -132,7 +136,7 @@ function resetArchive() {
                <router-link to="/export">Export</router-link>
             </nav>
             <p class="footer-copy">
-               {{ currentYear }} · Browser-only Snapchat takeout metadata review
+               {{ currentYear }} · Browser-only archive metadata review
             </p>
          </div>
       </footer>
@@ -336,6 +340,14 @@ function resetArchive() {
 .footer-tagline {
    max-width: 520px;
    color: var(--text);
+}
+
+.footer-disclaimer {
+   max-width: 560px;
+   margin-top: 10px;
+   color: var(--text-soft);
+   font-size: 0.84rem;
+   line-height: 1.5;
 }
 
 .footer-nav {

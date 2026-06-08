@@ -41,7 +41,7 @@ async function startImport() {
       <div class="container import-shell">
          <header class="page-header">
             <span class="eyebrow">Import your takeout</span>
-            <h1>Drop the Snapchat zip and start the goodbye flow.</h1>
+            <h1>Drop the archive zip and start the goodbye flow.</h1>
             <p class="page-subtitle">
                This opens the takeout locally, detects the export structure, and
                reads metadata in your browser.
@@ -73,7 +73,7 @@ async function startImport() {
                   <h3 class="info-title">What this session is for</h3>
                   <ul class="info-list">
                      <li>
-                        Turn a Snapchat takeout into a readable end-of-era
+                        Turn an archive takeout into a readable end-of-era
                         recap.
                      </li>
                      <li>
@@ -88,12 +88,12 @@ async function startImport() {
                <section class="card info-card">
                   <h3 class="info-title">Where to get the zip</h3>
                   <ol class="info-steps">
-                     <li>Open Snapchat and go to Settings.</li>
+                     <li>Open the account settings for the service.</li>
                      <li>
-                        Find <strong>My Data</strong> under account actions.
+                        Find <strong>My Data</strong> or the export request area.
                      </li>
                      <li>Request the archive download link by email.</li>
-                     <li>Download the zip once Snapchat sends it.</li>
+                     <li>Download the zip once it is ready.</li>
                   </ol>
                </section>
 

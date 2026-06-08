@@ -32,10 +32,10 @@ onMounted(() => {
          <header class="page-header">
             <div>
                <span class="eyebrow">Recap overview</span>
-               <h1>Your Snapchat chapter, compressed.</h1>
+               <h1>Your archive chapter, compressed.</h1>
                <p class="page-subtitle">
                   Session opened on {{ importedDate }}. These numbers come from
-                  detected Snapchat export files and Memories metadata.
+                  detected export files and Memories metadata.
                </p>
             </div>
             <nav class="dashboard-nav">
@@ -73,7 +73,7 @@ onMounted(() => {
                         ? '...'
                         : formatNumber(stats?.totalSnaps || 0)
                   "
-                  label="Snap events"
+                  label="Archive events"
                />
                <StatCard
                   icon="👥"
@@ -149,7 +149,7 @@ onMounted(() => {
             <h2 class="section-heading">Recap highlights</h2>
             <p class="section-subtitle">
                Run local analyzers to generate inspectable, non-AI summaries of
-               your Snapchat history.
+               your archive history.
                <router-link to="/summary">Open the full narrative</router-link>
             </p>
          </section>

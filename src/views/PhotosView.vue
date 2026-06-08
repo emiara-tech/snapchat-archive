@@ -63,7 +63,7 @@ function closeDetail() {
       <div class="container">
          <header class="page-header">
             <span class="eyebrow">Memories metadata</span>
-            <h1>Review what Snapchat says is in Memories.</h1>
+            <h1>Review what the export says is in Memories.</h1>
             <p class="page-subtitle">
                {{ filteredPhotos.length }} metadata records in the current
                filter set.

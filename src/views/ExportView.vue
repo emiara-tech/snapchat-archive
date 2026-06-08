@@ -41,7 +41,7 @@ function downloadMetadataJson() {
    const url = URL.createObjectURL(blob);
    const link = document.createElement("a");
    link.href = url;
-   link.download = `snapchat-archive-metadata-${new Date().toISOString().slice(0, 10)}.json`;
+   link.download = `goodbye-chat-metadata-${new Date().toISOString().slice(0, 10)}.json`;
    document.body.appendChild(link);
    link.click();
    link.remove();
@@ -70,8 +70,8 @@ function downloadMetadataJson() {
                <div class="format-info">
                   <span class="format-name">JSON metadata</span>
                   <span class="format-desc"
-                     >Includes Memories metadata and optional chat, snap, story,
-                     and diagnostic data.</span
+                     >Includes Memories metadata and optional chat, story, and
+                     diagnostic data.</span
                   >
                </div>
             </div>
@@ -89,7 +89,7 @@ function downloadMetadataJson() {
                         updateConfig('includeSnaps', !config.includeSnaps)
                      "
                   />
-                  <span class="checkbox-label">Snap event metadata</span>
+                  <span class="checkbox-label">Archive event metadata</span>
                </label>
 
                <label class="checkbox-item">

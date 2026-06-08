@@ -1,4 +1,4 @@
-# Snapshit
+# Goodbye Chat
 
 # Why
 Snapchat today is not what it used to be. I am not who I used to be either. When I was 12 I though snapchat was great.
@@ -13,7 +13,7 @@ Thanks Snapchat for following GDPR and respecting my data. Now this part is for 
 1. Request zip files from Snapchat page [My Data](https://accounts.snapchat.com/v2/download-my-data)
 2. Wait...
 3. Download zip files from the email Snapchat sends you.
-4. Navigate to insertdomainnamehere.com
+4. Navigate to goodbye.chat
 5. Upload zip(locally, i.e. stays in your browser).
 6. Reminisce.
 7. Export

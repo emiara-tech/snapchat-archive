@@ -18,8 +18,17 @@
                   >Nothing in this concept flow is meant to be
                   collected.</strong
                >
-               Goodbye Snapchat is framed as a client-only experience that opens
-               the archive locally and keeps the session in the browser.
+               Goodbye Chat is framed as a client-only experience that opens the
+               archive locally and keeps the session in the browser.
+            </p>
+         </section>
+
+         <section class="privacy-section">
+            <h2>Independence</h2>
+            <p>
+               Goodbye Chat is an independent tool and is not affiliated with,
+               endorsed by, or sponsored by the platform that produced the
+               archive.
             </p>
          </section>
 
@@ -76,18 +85,17 @@
          <section class="privacy-section">
             <h2>Project angle</h2>
             <p>
-               The product direction is simple: Snapchat exports should be
-               portable, legible, and honest about what has and has not been
-               parsed.
+               The product direction is simple: archives should be portable,
+               legible, and honest about what has and has not been parsed.
             </p>
          </section>
 
          <section class="about-section">
             <h2>About the project</h2>
             <p>
-               Goodbye Snapchat was built around a stronger narrative than
-               “archive viewer.” It is meant to feel like a deliberate off-ramp
-               from a platform era that mattered.
+               Goodbye Chat was built around a stronger narrative than “archive
+               viewer.” It is meant to feel like a deliberate off-ramp from a
+               platform era that mattered.
             </p>
             <p>
                That means detection first, review second, export third. The

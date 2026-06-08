@@ -6,7 +6,7 @@
                <span class="eyebrow">Free software · Local-first</span>
                <h1>Your archive, your machine.</h1>
                <p class="hero-subtitle">
-                  Drop your Snapchat takeout zip. Inspect metadata, run local
+                  Drop your archive zip. Inspect metadata, run local
                   summaries, and export JSON. Nothing leaves your browser.
                </p>
                <div class="hero-actions">
@@ -40,8 +40,8 @@
                <div class="preview-story">
                   <p class="story-label">Your recap</p>
                   <h2>
-                     Detected files first: Memories metadata, chat history, snap
-                     history, story history, and archive diagnostics.
+                     Detected files first: Memories metadata, chat history,
+                     event history, story history, and archive diagnostics.
                   </h2>
                </div>
 
@@ -65,7 +65,7 @@
                <div class="flow-step">
                   <span class="step-num">1</span>
                   <h3>Drop your zip</h3>
-                  <p>Snapchat Settings → My Data → Submit Request</p>
+                  <p>Account settings → export request → download</p>
                </div>
                <div class="flow-step">
                   <span class="step-num">2</span>

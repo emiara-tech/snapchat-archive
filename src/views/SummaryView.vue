@@ -40,7 +40,7 @@ async function runAnalyzer(id: string) {
             <span class="eyebrow">Local analysis</span>
             <h1>Inspectable summaries, not invented certainty.</h1>
             <p class="page-subtitle">
-               These analyzers run in the browser against parsed Snapchat JSON.
+               These analyzers run in the browser against parsed archive JSON.
                They are simple heuristics and expose their raw output.
             </p>
          </header>
@@ -117,8 +117,8 @@ async function runAnalyzer(id: string) {
             <h3>Limits</h3>
             <p>
                The sentiment analyzer is keyword based. Activity runs are not
-               Snapchat streaks. Media files are not rendered or matched to
-               chats in this refactor.
+               streak counts. Media files are not rendered or matched to chats
+               in this refactor.
             </p>
          </section>
       </div>

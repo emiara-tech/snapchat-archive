@@ -11,7 +11,7 @@
       tabindex="0"
       @keydown.enter="handleClick"
       @keydown.space.prevent="handleClick"
-      aria-label="Drop your Snapchat takeout zip here or click to browse"
+      aria-label="Drop your archive zip here or click to browse"
    >
       <input
          ref="fileInput"
@@ -24,10 +24,10 @@
 
       <div v-if="files.length === 0" class="dropzone-content">
          <div class="dropzone-icon" aria-hidden="true">ZIP</div>
-         <p class="dropzone-title">Drop your Snapchat takeout zips</p>
+         <p class="dropzone-title">Drop your archive zips</p>
          <p class="dropzone-subtitle">or click to choose the files</p>
          <p class="dropzone-hint">
-            Works with the zip files Snapchat emails from the My Data flow
+            Works with the zip files from the account export flow
          </p>
       </div>
 
