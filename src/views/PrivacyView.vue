@@ -14,10 +14,7 @@
          <section class="privacy-section">
             <h2>What we collect</h2>
             <p>
-               <strong
-                  >Nothing in this concept flow is meant to be
-                  collected.</strong
-               >
+               <strong>Nothing is collected.</strong>
                Goodbye Chat is framed as a client-only experience that opens the
                archive locally and keeps the session in the browser.
             </p>

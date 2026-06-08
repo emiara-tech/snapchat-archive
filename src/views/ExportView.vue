@@ -58,8 +58,8 @@ function downloadMetadataJson() {
             <h1>Download what the parser can prove.</h1>
             <p class="page-subtitle">
                This export writes normalized metadata, diagnostics, and stats to
-               JSON. Media packaging and Immich import are intentionally
-               disabled until media mapping is implemented.
+               JSON. Media files are not packaged — this tool focuses on
+               structured data from the archive.
             </p>
          </header>
 
@@ -132,11 +132,11 @@ function downloadMetadataJson() {
          </div>
 
          <div class="export-info card">
-            <h3>Not implemented yet</h3>
+            <h3>Media files</h3>
             <p>
-               This refactor does not package media files or generate Immich
-               imports. The app first needs reliable mapping between Memories
-               metadata, local `memories/` files, and `chat_media/` attachments.
+               This export covers structured data only. Photo and video files
+               from your archive are not packaged — the JSON output contains
+               the metadata records that reference them.
             </p>
          </div>
 
