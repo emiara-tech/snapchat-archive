@@ -77,7 +77,7 @@
                <div class="flow-step">
                   <span class="step-num">3</span>
                   <h3>Export clean</h3>
-                  <p>JSON metadata now. Media packaging later.</p>
+                  <p>Download normalized metadata as JSON.</p>
                </div>
             </div>
 

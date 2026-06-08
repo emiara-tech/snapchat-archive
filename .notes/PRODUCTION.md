@@ -9,9 +9,14 @@ The production build output directory is `dist`.
 Due to the heavy integrations with both automatic AI-code review tools, easy deploy tools like vercel and cloudflare, and blacksmith.sh.  The project should move from codeberg to github. A mirror was considered but in the end deemed unessesary. Sorry codeberg.
 
 ## CI/CD
-dev branch for main development
-main branch for production
-updates to main branch should trigger CI/CD, and deployment to cloudflare pages
+[x] dev branch for main development
+[x] main branch for production
+
+[] coderabbit for AI codereview
+[] blacksmith for building
+
+Should be a `pull request` first workflow. This is to encurage contributions to the tools that will be added to analyse the archive.
+
 
 ## Cloudflare Pages Settings
 

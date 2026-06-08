@@ -16,7 +16,7 @@ const analyzers = [
    { id: "bestFriends", label: "Top conversations" },
    { id: "wordCloud", label: "Common words" },
    { id: "streaks", label: "Conversation activity runs" },
-   { id: "sentiment", label: "Keyword sentiment prototype" },
+   { id: "sentiment", label: "Keyword sentiment" },
 ];
 
 onMounted(() => {
