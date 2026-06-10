@@ -163,7 +163,6 @@ function closeDetail() {
                   @click="closeDetail"
                   aria-label="Close"
                >
-                  x
                </button>
 
                <div class="detail-header">
