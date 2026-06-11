@@ -31,8 +31,8 @@
 - Keep the app working as a local archive browser and exporter.
 - Preserve privacy-focused behavior: nothing should require sending user archives to a remote service.
 - For code changes, pass the project checks before considering the task done:
-  - `npm run build`
-  - `npm run test`
+  - `pnpm run build`
+  - `pnpm run test`
 
 ## Implementation Guidance
 
