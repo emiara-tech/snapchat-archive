@@ -43,10 +43,10 @@ function resetArchive() {
 		<header class="header" :class="{ transparent: isLandingPage }">
 			<div class="header-inner">
 				<router-link to="/" class="logo">
-					<span class="logo-mark" aria-hidden="true">GS</span>
+					<span class="logo-mark" aria-hidden="true">GC</span>
 					<span class="logo-text">
 						<strong>Goodbye Chat</strong>
-						<small>Local takeout recap</small>
+						<small>A proper goodbye</small>
 					</span>
 				</router-link>
 
@@ -115,12 +115,12 @@ function resetArchive() {
 				<div class="footer-brand">
 					<span class="footer-eyebrow">Goodbye Chat</span>
 					<p class="footer-tagline">
-						Review your takeout locally, inspect detected metadata, and export a
-						JSON record you control.
+						Review your Snapchat takeout locally, inspect, reflect and export a
+						the data you already own.
 					</p>
 					<p class="footer-disclaimer">
 						Independent tool. Not affiliated with, endorsed by, or sponsored by
-						the platform that produced the archive.
+						Snap Inc. 
 					</p>
 				</div>
 				<nav class="footer-nav">
@@ -129,7 +129,7 @@ function resetArchive() {
 					<router-link to="/export">Export</router-link>
 				</nav>
 				<p class="footer-copy">
-					{{ currentYear }} · Browser-only archive metadata review
+					{{ currentYear }} · emiara tech
 				</p>
 			</div>
 		</footer>

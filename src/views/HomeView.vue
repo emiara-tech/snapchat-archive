@@ -4,10 +4,9 @@
 			<div class="container hero-grid">
 				<div class="hero-copy">
 					<span class="eyebrow">Free software · Local-first</span>
-					<h1>Your archive, your machine.</h1>
+					<h1>Your data, your memories.</h1>
 					<p class="hero-subtitle">
-						Drop your archive zip. Inspect metadata, run local summaries, and
-						export JSON. Nothing leaves your browser.
+						Drop your Snapchat archive zip. Explore forgotten memories. Privately. Nothing leaves your browser. You leave Snapchat.
 					</p>
 					<div class="hero-actions">
 						<router-link to="/import" class="btn btn-primary"
@@ -16,6 +15,7 @@
 					</div>
 				</div>
 
+				<!-- Add a collage of cringy 2012 memorobilia like mustaches and nyancats etc. -->
 				<div class="hero-preview card">
 					<div class="preview-topline">
 						<span class="preview-kicker">What you'll see</span>
@@ -25,34 +25,33 @@
 					<div class="preview-stats">
 						<article>
 							<strong>564</strong>
-							<span>memories</span>
+							<span>longest streak</span>
 						</article>
 						<article>
-							<strong>9.2 GB</strong>
-							<span>local fixture</span>
+							<strong>2011/02/22</strong>
+							<span>You first joined snapchat</span>
 						</article>
 						<article>
-							<strong>JSON</strong>
-							<span>export</span>
+							<strong>yolo ✌️</strong>
+							<span>most used word in 2012</span>
 						</article>
 					</div>
 
 					<div class="preview-story">
-						<p class="story-label">Your recap</p>
+						<p class="story-label">Get insights into the entire story</p>
 						<h2>
-							Detected files first: Memories metadata, chat history, event
-							history, story history, and archive diagnostics.
+							Start from the begining. No more scrolling an entire evening to find the earliest message to your bestie.
 						</h2>
 					</div>
 
 					<div class="preview-rail">
 						<div class="rail-block">
-							<span class="rail-title">Review</span>
-							<p>Filter Memories metadata by year and type.</p>
+							<span class="rail-title">Photobook</span>
+							<p>Browse all your photos in one place. Memories, memes in chats, saved selfies. Filter out your ex And export it to somewhere safe.</p>
 						</div>
 						<div class="rail-block accent">
 							<span class="rail-title">Export</span>
-							<p>Download normalized metadata and diagnostics.</p>
+							<p>Export your images in a way that makes sense to you. To Google Photos, Immich, iCloud or local storage.</p>
 						</div>
 					</div>
 				</div>
@@ -65,17 +64,17 @@
 					<div class="flow-step">
 						<span class="step-num">1</span>
 						<h3>Drop your zip</h3>
-						<p>Account settings → export request → download</p>
+						<p>Settings → My Data → Select all → Get archive in mail → Open Archive</p>
 					</div>
 					<div class="flow-step">
 						<span class="step-num">2</span>
-						<h3>Inspect locally</h3>
-						<p>Metadata, stories, chats, and diagnostics in your browser</p>
+						<h3>Understand your digital life</h3>
+						<p>View your data how you remember it, not as how Snapchat stores it.</p>
 					</div>
 					<div class="flow-step">
 						<span class="step-num">3</span>
-						<h3>Export clean</h3>
-						<p>Download normalized metadata as JSON.</p>
+						<h3>Take the memories with you</h3>
+						<p>After reviewing your life on Snapchat. Take the memories with you by exporting it whereever you want.</p>
 					</div>
 				</div>
 
