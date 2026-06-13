@@ -2,109 +2,76 @@
 	<div class="page">
 		<div class="container container-narrow">
 			<header class="page-header">
-				<span class="eyebrow">Privacy and framing</span>
-				<h1>Why this is designed like a goodbye tool.</h1>
+				<span class="eyebrow">Your data • No servers</span>
+				<h1>Nothing you load here is sent anywhere.</h1>
 				<p class="page-subtitle">
-					The site is positioned around local review, recap, and clean export.
-					The product promise only works if the archive stays under the user’s
-					control.
+					This is the privacy policy for Goodbye Chat. It is short because
+					there is not much to say: the app runs entirely in your browser and
+					your archive never touches a server.
 				</p>
 			</header>
 
 			<section class="privacy-section">
 				<h2>What we collect</h2>
 				<p>
-					<strong>Nothing is collected.</strong>
-					Goodbye Chat is framed as a client-only experience that opens the
-					archive locally and keeps the session in the browser.
+					<strong>Nothing.</strong> Goodbye Chat has no accounts, no analytics,
+					no crash reporting, and no telemetry of any kind. There is no backend
+					to send data to.
 				</p>
 			</section>
 
 			<section class="privacy-section">
-				<h2>Independence</h2>
+				<h2>How your archive is processed</h2>
 				<p>
-					Goodbye Chat is an independent tool and is not affiliated with,
-					endorsed by, or sponsored by the platform that produced the archive.
-				</p>
-			</section>
-
-			<section class="privacy-section">
-				<h2>How it works</h2>
-				<p>
-					The import, recap, review, and export screens are all designed around
-					browser-side handling of the takeout so the archive does not need to
-					bounce through a hosted backend.
+					When you drop a zip, your browser reads it directly using local file
+					APIs. The archive is parsed in-memory and never uploaded. All
+					analysis — summaries, chat counts, media stats — runs client-side
+					against the parsed JSON.
 				</p>
 				<ul>
-					<li>No account creation requirement</li>
-					<li>No analytics framing in the product copy</li>
-					<li>No server-side storage in the intended flow</li>
-					<li>
-						No reason to hand your takeout to a third party just to read it
-					</li>
+					<li>No account required to use the app</li>
+					<li>No server receives your takeout file</li>
+					<li>No data is written outside your browser session</li>
+					<li>Closing the tab ends the session completely</li>
 				</ul>
 			</section>
 
 			<section class="privacy-section">
-				<h2>Recap logic</h2>
+				<h2>Data retention</h2>
 				<p>
-					The analysis language is intentionally conservative. It surfaces
-					simple patterns from parsed JSON and avoids claiming more than the
-					data supports.
-				</p>
-				<p>
-					If a summary feels wrong, trust the raw export more than the summary
-					layer. The archive diagnostics should always remain visible.
+					Nothing persists after you close the tab. Goodbye Chat does not write
+					to localStorage, does not set cookies, and does not cache your archive
+					anywhere outside the active browser window.
 				</p>
 			</section>
 
 			<section class="privacy-section">
-				<h2>Data lifecycle</h2>
-				<ul>
-					<li><strong>Import:</strong> Open the takeout zip locally</li>
-					<li>
-						<strong>Session:</strong> Review metadata and diagnostics in-browser
-					</li>
-					<li><strong>Export:</strong> Download normalized JSON metadata</li>
-					<li>
-						<strong>Close:</strong> End the session without leaving a cloud copy
-						behind
-					</li>
-				</ul>
+				<h2>Third parties</h2>
+				<p>
+					No third-party analytics SDKs, tracking pixels, or advertising
+					scripts are loaded by this app.
+				</p>
+				<p>
+					Goodbye Chat is an independent tool. It is not affiliated with,
+					endorsed by, or sponsored by Snapchat or Snap Inc.
+				</p>
 			</section>
 
 			<section class="privacy-section">
-				<h2>Project angle</h2>
+				<h2>Exports</h2>
 				<p>
-					The product direction is simple: archives should be portable, legible,
-					and honest about what has and has not been parsed.
-				</p>
-			</section>
-
-			<section class="about-section">
-				<h2>About the project</h2>
-				<p>
-					Goodbye Chat was built around a stronger narrative than “archive
-					viewer.” It is meant to feel like a deliberate off-ramp from a
-					platform era that mattered.
-				</p>
-				<p>
-					That means detection first, review second, export third. The interface
-					should help people understand what is in the archive before it
-					promises media migration.
-				</p>
-				<p class="about-tagline">
-					&quot;Load the zip. Verify the structure. Export what was
-					parsed.&quot;
+					If you use the export feature, your archive data is saved directly
+					to your machine. Nothing is sent anywhere in the process. Goodbye
+					Chat does not receive a copy.
 				</p>
 			</section>
 
 			<section class="contact-section card">
-				<h2>Design principles</h2>
+				<h2>Questions</h2>
 				<p>
-					Local-first by default. No account trap. Clear diagnostics. A visual
-					tone that treats the archive like a personal chapter, not just a
-					dataset.
+					If something here does not add up or you want to read the source,
+					reach out at
+					<a href="mailto:hello@goodbye.chat">hello@goodbye.chat</a>.
 				</p>
 			</section>
 		</div>
@@ -170,31 +137,6 @@
 	color: var(--text-h);
 }
 
-.about-section {
-	margin-bottom: var(--space-xl);
-	padding-bottom: var(--space-xl);
-	border-bottom: 1px solid var(--border);
-}
-
-.about-section h2 {
-	font-size: 1.25rem;
-	margin-bottom: var(--space-md);
-}
-
-.about-section p {
-	color: var(--text-soft);
-	line-height: 1.7;
-	margin-bottom: var(--space-md);
-}
-
-.about-tagline {
-	font-family: var(--font-serif);
-	font-size: 1.25rem;
-	font-style: italic;
-	color: var(--text-h) !important;
-	margin-top: var(--space-lg);
-}
-
 .contact-section h2 {
 	font-size: 1.25rem;
 	margin-bottom: var(--space-md);
@@ -203,5 +145,9 @@
 .contact-section p {
 	color: var(--text-soft);
 	line-height: 1.7;
+}
+
+.contact-section a {
+	color: var(--text-h);
 }
 </style>
