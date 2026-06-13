@@ -112,7 +112,7 @@ function resetArchive() {
 				<div class="footer-brand">
 					<span class="footer-eyebrow">Goodbye Chat</span>
 					<p class="footer-tagline">
-						Review your Snapchat takeout locally, inspect, reflect and export a
+						Review your Snapchat takeout locally, inspect, reflect and export
 						the data you already own.
 					</p>
 					<p class="footer-disclaimer">
