@@ -57,7 +57,7 @@ async function startImport() {
 							@click="startImport"
 							:disabled="isStarting"
 						>
-							{{ isStarting ? "Preparing session..." : "Build my recap" }}
+							{{ isStarting ? "Opening..." : "Open the box" }}
 						</button>
 						<button class="btn btn-secondary" @click="resetFiles">
 							Pick different zips
