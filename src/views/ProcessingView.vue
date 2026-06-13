@@ -17,7 +17,7 @@ async function runProcessingSequence() {
 	try {
 		await archiveStore.prepareArchive(archiveStore.selectedFiles);
 		archiveStore.completeProcessing();
-		router.push("/dashboard");
+		router.push("/photos");
 	} catch (error) {
 		console.error("Failed to process archive", error);
 		archiveStore.updateProgress(0, "Failed to process archive");
@@ -26,7 +26,7 @@ async function runProcessingSequence() {
 
 onMounted(() => {
 	if (archiveStore.isImported) {
-		router.push("/dashboard");
+		router.push("/photos");
 		return;
 	}
 

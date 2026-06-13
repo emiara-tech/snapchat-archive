@@ -12,10 +12,7 @@ const isMobileMenuOpen = ref(false);
 
 // Only active after archive upload
 const archiveNavItems = [
-	{ path: "/dashboard", label: "Recap" },
 	{ path: "/photos", label: "Review" },
-	{ path: "/summary", label: "Story" },
-	{ path: "/export", label: "Export" },
 	{ path: "/privacy", label: "Privacy" },
 ];
 
@@ -126,7 +123,6 @@ function resetArchive() {
 				<nav class="footer-nav">
 					<router-link to="/privacy">Privacy</router-link>
 					<router-link to="/import">Import</router-link>
-					<router-link to="/export">Export</router-link>
 				</nav>
 				<p class="footer-copy">
 					{{ currentYear }} · emiara tech
