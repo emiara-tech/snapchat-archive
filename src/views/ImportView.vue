@@ -40,11 +40,10 @@ async function startImport() {
 	<div class="page">
 		<div class="container import-shell">
 			<header class="page-header">
-				<span class="eyebrow">Import your takeout</span>
-				<h1>Drop the archive zip and start the goodbye flow.</h1>
+				<span class="eyebrow">Your data • Your browser</span>
+				<h1>Drop the zips from Snapchat here to start exploring the past.</h1>
 				<p class="page-subtitle">
-					This opens the takeout locally, detects the export structure, and
-					reads metadata in your browser.
+					This opens your Snapchat data, locally and privately. Your eyes only.
 				</p>
 			</header>
 
@@ -68,21 +67,22 @@ async function startImport() {
 
 				<aside class="import-sidebar">
 					<section class="card info-card emphasis">
-						<h3 class="info-title">What this session is for</h3>
+						<h3 class="info-title">What this is for</h3>
 						<ul class="info-list">
-							<li>Turn an archive takeout into a readable end-of-era recap.</li>
-							<li>Review Memories metadata without leaving the browser.</li>
-							<li>Export a JSON bundle of parsed metadata and diagnostics.</li>
+							<li>It is scary to delete your account, this tool will alleviate that fear.</li>
+							<li>Get back control of your life story</li>
+							<li>Explore your past in a new and exiting way.</li>
 						</ul>
 					</section>
 
 					<section class="card info-card">
 						<h3 class="info-title">Where to get the zip</h3>
 						<ol class="info-steps">
-							<li>Open the account settings for the service.</li>
-							<li>Find <strong>My Data</strong> or the export request area.</li>
-							<li>Request the archive download link by email.</li>
-							<li>Download the zip once it is ready.</li>
+							<li>Open the account settings On Snapchat.</li>
+							<li>Find <strong>My Data</strong>.</li>
+							<li>Request ALL possible data sent by email.</li>
+							<li>Wait...</li>
+							<li>Download the zip once it is ready, and come back here.</li>
 						</ol>
 					</section>
 
@@ -90,9 +90,9 @@ async function startImport() {
 						<h3 class="info-title">Privacy notes</h3>
 						<ul class="info-list">
 							<li>No sign-in wall.</li>
-							<li>No analytics or background upload flow.</li>
+							<li>No analytics.</li>
 							<li>
-								Session data is meant to stay in-browser while you review.
+								Your data stays in-browser.
 							</li>
 						</ul>
 					</section>
@@ -101,10 +101,9 @@ async function startImport() {
 
 			<section class="import-footnote card">
 				<div>
-					<span class="footnote-label">After import</span>
+					<span class="footnote-label">After exploring</span>
 					<p>
-						The next screens focus on detected files, metadata review, and a
-						truthful JSON export.
+						Filter out what you would mostly like to forget, and take the rest with you wherever you want.
 					</p>
 				</div>
 			</section>
