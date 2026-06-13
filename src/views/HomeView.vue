@@ -3,15 +3,18 @@
 		<section class="hero">
 			<div class="container hero-grid">
 				<div class="hero-copy">
-					<span class="eyebrow">Free software · Local-first</span>
+					<span class="eyebrow">Free software</span>
 					<h1>Your data, your memories.</h1>
 					<p class="hero-subtitle">
-						Drop your Snapchat archive zip. Explore forgotten memories. Privately. Nothing leaves your browser. You leave Snapchat.
+						Open up a memorybox from your own digital backyard. Explore forgotten memories. Look at your Snapchat data how you remember it, not how Snap Inc. stores it.
 					</p>
 					<div class="hero-actions">
 						<router-link to="/import" class="btn btn-primary"
 							>Open archive</router-link
 						>
+						<a target="_blank" class="btn btn-secondary"href="https://accounts.snapchat.com/v2/download-my-data">
+							<p>Request archive</p>
+						</a>
 					</div>
 				</div>
 
@@ -64,7 +67,7 @@
 					<div class="flow-step">
 						<span class="step-num">1</span>
 						<h3>Drop your zip</h3>
-						<p>Settings → My Data → Select all → Get archive in mail → Open Archive</p>
+						<p>Settings → My Data → Select all → All time or No specific date range -> Get archive in mail → Open Archive</p>
 					</div>
 					<div class="flow-step">
 						<span class="step-num">2</span>

@@ -22,9 +22,9 @@ done when:
 
 The landing page is structurally sound but the copy is generic and mostly speaks to one user type (the Escapee). Four actionable items:
 
-[] **Hero subtitle** — Rewrite to address all three personas (Escapee, Eulogist, Curious). Lead with nostalgia/forgotten-memory recognition, end with the exit. Currently "You leave Snapchat." cuts off the Eulogist and Curious entirely.
+[x] **Hero subtitle** — Rewrite to address all three personas (Escapee, Eulogist, Curious). Lead with nostalgia/forgotten-memory recognition, end with the exit. Currently "You leave Snapchat." cuts off the Eulogist and Curious entirely.
 
-[] **Secondary CTA for FLOW step 2** — Add a small link below the "Open archive" button for users who don't have their archive yet (links to the get-your-data page). Without it, first-time visitors without an archive have no path forward.
+[x] **Secondary CTA for FLOW step 2** — Add a small link below the "Open archive" button for users who don't have their archive yet (links to the get-your-data page). Without it, first-time visitors without an archive have no path forward.
 
 [] **Preview card headline** — Replace "What you'll see" with copy that signals *surprise and scale* — the "Social Media Wrapped" / forgotten-memory-recognition moment that VISION calls the north star.
 
