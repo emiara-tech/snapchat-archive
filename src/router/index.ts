@@ -5,26 +5,20 @@ const routes: RouteRecordRaw[] = [
 	{
 		path: "/",
 		name: "home",
-		component: () => import("../views/HomeView.vue"),
+		component: () => import("../views/HomeView.vue"), // stays
 		meta: { title: "Goodbye Chat" },
 	},
 	{
 		path: "/import",
 		name: "import",
-		component: () => import("../views/ImportView.vue"),
+		component: () => import("../views/ImportView.vue"), // stays
 		meta: { title: "Import Your Archive | Goodbye Chat" },
 	},
 	{
 		path: "/processing",
 		name: "processing",
-		component: () => import("../views/ProcessingView.vue"),
+		component: () => import("../views/ProcessingView.vue"), // stays
 		meta: { title: "Building Your Recap | Goodbye Chat" },
-	},
-	{
-		path: "/dashboard",
-		name: "dashboard",
-		component: () => import("../views/DashboardView.vue"),
-		meta: { title: "Your Archive Recap | Goodbye Chat" },
 	},
 	{
 		path: "/photos",
@@ -33,21 +27,9 @@ const routes: RouteRecordRaw[] = [
 		meta: { title: "Review Your Photos | Goodbye Chat" },
 	},
 	{
-		path: "/summary",
-		name: "summary",
-		component: () => import("../views/SummaryView.vue"),
-		meta: { title: "Your Story Recap | Goodbye Chat" },
-	},
-	{
-		path: "/export",
-		name: "export",
-		component: () => import("../views/ExportView.vue"),
-		meta: { title: "Export Photos | Goodbye Chat" },
-	},
-	{
 		path: "/privacy",
 		name: "privacy",
-		component: () => import("../views/PrivacyView.vue"),
+		component: () => import("../views/PrivacyView.vue"), // stays
 		meta: { title: "Privacy & Project Notes | Goodbye Chat" },
 	},
 ];
