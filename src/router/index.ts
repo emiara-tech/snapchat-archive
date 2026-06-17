@@ -32,6 +32,12 @@ const routes: RouteRecordRaw[] = [
 		component: () => import("../views/PrivacyView.vue"), // stays
 		meta: { title: "Privacy & Project Notes | Goodbye Chat" },
 	},
+	{
+		path: "/welcome",
+		name: "welcome",
+		component: () => import("../views/WelcomeView.vue"),
+		meta: { title: "Welcome | Goodbye Chat" },
+	},
 ];
 
 const router = createRouter({
