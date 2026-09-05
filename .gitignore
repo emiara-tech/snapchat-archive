@@ -24,4 +24,26 @@ dist-ssr
 *.sw?
 example_export
 
+# Keep planning notes in version control, but never add media references or
+# recordings. Markdown and other text files remain available as project context.
+.notes/**/*.png
+.notes/**/*.jpg
+.notes/**/*.jpeg
+.notes/**/*.gif
+.notes/**/*.webp
+.notes/**/*.avif
+.notes/**/*.heic
+.notes/**/*.svg
+.notes/**/*.mp3
+.notes/**/*.m4a
+.notes/**/*.aac
+.notes/**/*.flac
+.notes/**/*.wav
+.notes/**/*.ogg
+.notes/**/*.opus
+.notes/**/*.mp4
+.notes/**/*.mov
+.notes/**/*.m4v
+.notes/**/*.webm
+
 /PRODUCTION.md
