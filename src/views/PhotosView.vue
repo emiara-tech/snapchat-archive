@@ -165,7 +165,7 @@ function closeDetail() {
 							<dd>{{ selectedPhoto.location || "Not included" }}</dd>
 						</div>
 						<div>
-							<dt>Download Link</dt>
+							<dt>Archive file</dt>
 							<dd>{{ selectedPhoto.mainFilePath || "Not included" }}</dd>
 						</div>
 					</dl>

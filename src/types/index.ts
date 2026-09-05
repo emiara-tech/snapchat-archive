@@ -44,16 +44,33 @@ export interface SnapEntry {
 
 export type SnapHistory = Record<string, SnapEntry[]>;
 
+/**
+ * A memory as the app holds it. Deliberately has no `Download Link`: Snapchat's
+ * CDN URLs expire about a week after the export is generated, and fetching them
+ * would tell Snap which memories are being opened and when. Media is read from
+ * the `memories/` directory inside the user's own export instead.
+ */
 export interface MediaRecord {
 	date: string;
 	mediaType: "Image" | "Video" | string;
 	location: string | null;
+	/** Path inside the archive zip, e.g. `memories/2026-03-21_<mid>-main.jpg`. */
 	mainFilePath: string;
 	overlayFilePath: string | null;
 }
 
+/** Raw `memories_history.json` shape, before the remote link is discarded. */
 export interface SavedMediaJson {
-	"Saved Media": MediaRecord[];
+	"Saved Media": RawSavedMediaEntry[];
+}
+
+export interface RawSavedMediaEntry {
+	Date?: unknown;
+	"Media Type"?: unknown;
+	Location?: unknown;
+	/** Expiring Snap CDN URL. Read for its `mid` only, never stored or fetched. */
+	"Download Link"?: unknown;
+	[key: string]: unknown;
 }
 
 export interface Story {

@@ -42,8 +42,14 @@ export function parseStoryHistoryJson(value: unknown): StoryHistoryJson | null {
 	} as StoryHistoryJson;
 }
 
-/** Parses json of the memories
+/**
+ * Parses `memories_history.json` into records the app can render offline.
  *
+ * Each raw entry carries a `Download Link` pointing at Snapchat's CDN. That URL
+ * is never kept: it expires roughly a week after the export is generated, and
+ * requesting it would report to Snap exactly which memories are being opened.
+ * It is read only to recover the media id (`mid`) that names the file inside the
+ * export's own `memories/` directory, and is discarded from there on.
  */
 export function parseMemoriesHistoryJson(value: unknown): MediaRecord[] {
 	if (!isRecord(value) || !Array.isArray(value["Saved Media"])) return [];
@@ -58,10 +64,10 @@ function normalizeMediaRecord(value: unknown): MediaRecord | null {
 	const date = readString(value.Date);
 	const mediaType = readString(value["Media Type"]);
 	const mainFilePath = mediaType
-		? constructFilePath(value, mediaType, "main")
+		? deriveArchiveMediaPath(value, mediaType, "main")
 		: null;
 	const overlayFilePath = mediaType
-		? constructFilePath(value, mediaType, "overlay")
+		? deriveArchiveMediaPath(value, mediaType, "overlay")
 		: null;
 
 	if (!date || !mediaType || !mainFilePath) return null;
@@ -102,7 +108,17 @@ function readString(value: unknown): string | null {
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
-function constructFilePath(
+/** Path inside the export that every archive media path must live under. */
+const MEMORIES_DIRECTORY = "memories/";
+
+/**
+ * Turns a raw memory entry into a path inside the export's `memories/`
+ * directory. The remote `Download Link` is consumed here and never returned:
+ * only its `mid` query parameter escapes this function, as part of the local
+ * filename. A record whose link cannot yield a `mid` is dropped rather than
+ * falling back to the remote URL.
+ */
+function deriveArchiveMediaPath(
 	value: Record<string, unknown>,
 	mediaType: string,
 	type: string,
@@ -110,10 +126,10 @@ function constructFilePath(
 	const date = readString(value.Date);
 	const downloadLink = readString(value["Download Link"]);
 	if (!date || !downloadLink) {
-		console.warn("[archive] memory record missing required fields", {
-			date,
-			downloadLink,
-			record: value,
+		// Never log the link or the raw record: both identify the memory.
+		console.warn("[archive] memory record missing Date or Download Link", {
+			hasDate: date !== null,
+			hasDownloadLink: downloadLink !== null,
 		});
 		return null;
 	}
@@ -123,10 +139,9 @@ function constructFilePath(
 		const url = new URL(downloadLink);
 		const mid = url.searchParams.get("mid");
 		if (!mid) {
-			console.warn('[archive] memory record Download Link has no "mid" param', {
-				downloadLink,
-				record: value,
-			});
+			console.warn(
+				'[archive] memory record Download Link has no "mid" param; skipping',
+			);
 			return null;
 		}
 		const extension =
@@ -135,12 +150,32 @@ function constructFilePath(
 				: mediaType.toLowerCase() === "video"
 					? "mp4"
 					: "jpg";
-		return `memories/${dateFormatted}_${mid}-${type}.${extension}`;
+		const path = `${MEMORIES_DIRECTORY}${dateFormatted}_${mid}-${type}.${extension}`;
+		// Guard against a malformed `mid` (e.g. a nested URL) smuggling a remote
+		// reference into a field the app treats as a local archive path.
+		if (!isArchiveMediaPath(path)) {
+			console.warn(
+				"[archive] memory record produced a non-archive path; skipping",
+			);
+			return null;
+		}
+		return path;
 	} catch {
-		console.warn("[archive] memory record Download Link is not a valid URL", {
-			downloadLink,
-			record: value,
-		});
+		console.warn(
+			"[archive] memory record Download Link is not a valid URL; skipping",
+		);
 		return null;
 	}
+}
+
+/**
+ * True only for a relative path under `memories/` with no scheme, authority, or
+ * parent-directory traversal — i.e. something `ArchiveReader` can look up in the
+ * user's own zip.
+ */
+function isArchiveMediaPath(path: string): boolean {
+	if (!path.startsWith(MEMORIES_DIRECTORY)) return false;
+	if (path.includes("://") || path.includes("//")) return false;
+	if (path.includes(":")) return false;
+	return !path.split("/").includes("..");
 }
