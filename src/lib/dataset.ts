@@ -6,7 +6,7 @@ import type {
 	ReviewDecision, MediaLink, UnsupportedEvidence, Authorship,
 } from "../types/dataset";
 
-export const NORMALIZATION_VERSION = 4;
+export const NORMALIZATION_VERSION = 5;
 export const DEFAULT_QUERY: ArchiveQuery = {
 	year: null, participantId: null, conversationId: null, text: "", kind: "all", review: "active", linkState: "all",
 };
@@ -16,6 +16,11 @@ export interface DatasetDocument {
 	path: string;
 	ordinal?: number;
 	text: string;
+	/** Trusted loader/test proof of original bytes, never values claimed in parsed JSON. */
+	documentSha256?: string;
+	byteLength?: number;
+	/** Failed fatal decoding retains no replacement-character text. */
+	decodingFailure?: "invalid-utf8";
 }
 
 export interface DatasetInput {
@@ -62,7 +67,17 @@ export async function loadArchiveDataset(session: ArchiveSession, signal?: Abort
 		assertNotAborted(signal);
 		const bytes = await session.reader.readEntry(entry.id, 128 * 1024 * 1024);
 		assertNotAborted(signal);
-		documents.push({ sourceId: entry.id.sourceId, path: entry.id.path, ordinal: entry.id.ordinal, text: new TextDecoder().decode(bytes) });
+		const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+		assertNotAborted(signal);
+		const document: DatasetDocument = {
+			sourceId: entry.id.sourceId, path: entry.id.path, ordinal: entry.id.ordinal,
+			documentSha256: Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join(""),
+			byteLength: bytes.byteLength, text: "",
+		};
+		try { document.text = new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+		catch { document.decodingFailure = "invalid-utf8"; }
+		assertNotAborted(signal);
+		documents.push(document);
 	}
 	const input: DatasetInput = { entries: session.index.entries, documents, sourceDigests };
 	if (typeof Worker === "undefined") return normalizeArchiveDataset(input);
@@ -99,7 +114,35 @@ function canonical(value: unknown): string {
 	return JSON.stringify(value) ?? "null";
 }
 
+/** Shape/reference validation cannot attest unseen bytes. This DTO is supplied by local IO or authored tests. */
+function validateDocumentProof(input: DatasetInput): void {
+	const physicalEntries = new Map<string, SnapZipEntryMeta[]>();
+	for (const entry of input.entries) {
+		const key = canonical([entry.id.sourceId, entry.id.path, entry.id.ordinal]);
+		physicalEntries.set(key, [...(physicalEntries.get(key) ?? []), entry]);
+	}
+	const provenDocuments = new Set<string>();
+	for (const document of input.documents) {
+		const hasProof = document.documentSha256 !== undefined || document.byteLength !== undefined || document.decodingFailure !== undefined;
+		if (!hasProof) continue;
+		const key = canonical([document.sourceId, document.path, document.ordinal]);
+		const entries = physicalEntries.get(key) ?? [];
+		if (typeof document.documentSha256 !== "string" || !/^[a-f0-9]{64}$/.test(document.documentSha256)
+			|| !Number.isSafeInteger(document.byteLength) || document.byteLength! < 0
+			|| !Number.isSafeInteger(document.ordinal) || document.ordinal! < 0
+			|| typeof document.sourceId !== "string" || !document.sourceId || typeof document.path !== "string"
+			|| !isSafeArchivePath(document.path) || entries.length !== 1 || entries[0]!.isDirectory || provenDocuments.has(key)
+			|| entries[0]!.uncompressedSize !== document.byteLength
+			|| typeof document.text !== "string"
+			|| (document.decodingFailure !== undefined && (document.decodingFailure !== "invalid-utf8" || document.text !== ""))) {
+			throw new Error("The original document proof is incomplete or does not match its exact ZIP entry.");
+		}
+		provenDocuments.add(key);
+	}
+}
+
 export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
+	validateDocumentProof(input);
 	const coverage: ArchiveCoverage = {
 		sections: {}, missingMedia: 0, unknownAuthors: 0, invalidDates: 0,
 		duplicateRecords: 0, unsupportedRecords: 0, warnings: [],
@@ -107,6 +150,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	const unsupported: UnsupportedEvidence[] = [];
 	const supportedSections = new Set<string>();
 	const parsed = input.documents.map((document) => {
+		if (document.decodingFailure) return { document, value: null, invalid: true };
 		try { return { document, value: JSON.parse(document.text) as unknown, invalid: false }; }
 		catch { return { document, value: null, invalid: true }; }
 	});
@@ -118,7 +162,8 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 		const manifest = input.entries.filter((entry) => entry.id.sourceId === sourceId)
 			.map((entry) => [entry.id.path, entry.id.ordinal, entry.uncompressedSize, entry.signature ?? null]).sort(compareCanonical);
 		const documents = parsed.filter((entry) => entry.document.sourceId === sourceId)
-			.map((entry) => [entry.document.path, entry.document.ordinal, entry.invalid ? entry.document.text : entry.value]).sort(compareCanonical);
+			.map((entry) => [entry.document.path, entry.document.ordinal, entry.invalid ? entry.document.text : entry.value,
+				...(entry.document.documentSha256 ? [entry.document.documentSha256, entry.document.byteLength] : [])]).sort(compareCanonical);
 		const digest = input.sourceDigests?.[sourceId];
 		const key = digest && /^[a-f0-9]{64}$/.test(digest) ? `bytes-${digest}` : stableId("unverified-part", canonical([manifest, documents]));
 		sourceGroups.set(key, [...(sourceGroups.get(key) ?? []), sourceId]);
@@ -128,6 +173,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	const fingerprint = stableId("archive", canonical([NORMALIZATION_VERSION, [...sourceKeys.values()].sort()]));
 	const sourceOf = (document: DatasetDocument, pointer = ""): SourceReference => ({
 		sourceId: document.sourceId, sourceFingerprint: sourceKeys.get(document.sourceId), path: document.path, recordPointer: pointer, entryOrdinal: document.ordinal,
+		...(document.documentSha256 ? { documentSha256: document.documentSha256, documentByteLength: document.byteLength } : {}),
 	});
 	const reject = (source: SourceReference, value: unknown, reason: string, unsupportedShape = true) => {
 		unsupported.push({ source, raw: sanitizeRaw(value), reason });
@@ -140,10 +186,12 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	for (const [name, path] of Object.entries(SECTION_PATHS)) {
 		const docs = valuesAt(path);
 		coverage.sections[name] = { status: docs.length ? "available" : "missing", recordCount: 0, invalidCount: docs.filter((doc) => doc.invalid).length, unsupportedCount: 0 };
-		for (const doc of docs.filter((doc) => doc.invalid)) reject(sourceOf(doc.document), null, "This JSON section could not be parsed.", false);
+		for (const doc of docs.filter((doc) => doc.invalid)) reject(sourceOf(doc.document), null,
+			doc.document.decodingFailure ? "This JSON section contains invalid UTF-8." : "This JSON section could not be parsed.", false);
 	}
 	for (const doc of parsed.filter((doc) => !Object.values(SECTION_PATHS).includes(doc.document.path))) {
-		reject(sourceOf(doc.document), doc.value, "This section is retained as unsupported evidence.");
+		reject(sourceOf(doc.document), doc.value, doc.document.decodingFailure ? "This JSON section contains invalid UTF-8."
+			: doc.invalid ? "This JSON section could not be parsed." : "This section is retained as unsupported evidence.");
 	}
 	const ownerNames = new Set(valuesAt(SECTION_PATHS.account).flatMap(({ value }) => record(value) && record(value["Basic Information"])
 		? [string(value["Basic Information"].Username)].filter((name): name is string => Boolean(name)) : []));
@@ -191,8 +239,22 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	const conversations = new Map<string, Conversation>();
 	const scopeProofs = new Map<string, { direct: Map<string, SourceReference[]>; group: SourceReference[] }>();
 	const events = new Map<string, ConversationEvent>();
-	const orderedDocs = [...parsed].sort((a, b) => `${sourceKeys.get(a.document.sourceId)}:${a.document.path}:${a.document.ordinal}`.localeCompare(`${sourceKeys.get(b.document.sourceId)}:${b.document.path}:${b.document.ordinal}`));
-	for (const { document, value, invalid } of orderedDocs.filter(({ document }) => document.path === SECTION_PATHS.chats || document.path === SECTION_PATHS.snaps)) {
+	const eventPartitions = new Map<string, Map<string, ConversationEvent>>();
+	const documentKeys = new Map(parsed.map(({ document }) => [document,
+		canonical([sourceKeys.get(document.sourceId), document.path, document.ordinal, document.documentSha256 ?? stableId("unverified-text", document.text)])]));
+	const documentKey = (document: DatasetDocument) => documentKeys.get(document)!;
+	const orderedDocs = [...parsed].sort((a, b) => documentKey(a.document).localeCompare(documentKey(b.document)));
+	const unverifiedDocuments = new Map<(typeof parsed)[number], string>();
+	const documentRepeats = new Map<string, number>();
+	for (const parsedDocument of orderedDocs) {
+		const { document } = parsedDocument;
+		const key = documentKey(document);
+		const repeat = documentRepeats.get(key) ?? 0;
+		documentRepeats.set(key, repeat + 1);
+		unverifiedDocuments.set(parsedDocument, canonical([key, repeat]));
+	}
+	for (const parsedDocument of orderedDocs.filter(({ document }) => document.path === SECTION_PATHS.chats || document.path === SECTION_PATHS.snaps)) {
+		const { document, value, invalid } = parsedDocument;
 		const section = document.path === SECTION_PATHS.chats ? "chats" : "snaps";
 		if (invalid) continue;
 		if (!record(value)) { markInvalid(coverage, section); reject(sourceOf(document), value, "Expected a conversation record."); continue; }
@@ -213,6 +275,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 			if (directRecipient && !conversation.participantIds.includes(directRecipient.id)) conversation.participantIds.push(directRecipient.id);
 			conversations.set(conversationId, conversation);
 			const repeated = new Map<string, number>();
+			const originalRepeats = new Map<string, number>();
 			rows.forEach((row, index) => {
 				const source = sourceOf(document, `/${pointerEscape(threadKey)}/${index}`);
 				if (!record(row)) { markInvalid(coverage, section); reject(source, row, "A conversation event must be an object."); return; }
@@ -223,12 +286,21 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 					markInvalid(coverage, section); reject(source, row, "This event has no supported message fields."); return;
 				}
 				const time = normalizeTime(row.Created, row["Created(microseconds)"]);
+				const originalSignature = canonical(row);
+				const repeatRank = originalRepeats.get(originalSignature) ?? 0;
+				originalRepeats.set(originalSignature, repeatRank + 1);
 				const raw = sanitizeRaw(row) as Record<string, unknown>;
 				const signature = canonical(raw);
 				const repeat = repeated.get(signature) ?? 0;
 				repeated.set(signature, repeat + 1);
-				const id = stableId("event", `${document.path}:${threadKey}:${signature}:${repeat}`);
-				if (events.has(id)) { events.get(id)!.sources.push(source); coverage.duplicateRecords += 1; return; }
+				const legacyId = stableId("event", `${document.path}:${threadKey}:${signature}:${repeat}`);
+				const logicalKey = canonical([document.documentSha256 ? ["original-document", document.documentSha256] : ["unverified-document", unverifiedDocuments.get(parsedDocument)],
+					document.path, source.recordPointer, repeatRank]);
+				const partition = eventPartitions.get(legacyId) ?? new Map<string, ConversationEvent>();
+				eventPartitions.set(legacyId, partition);
+				const copy = partition.get(logicalKey);
+				if (copy) { copy.sources.push(source); coverage.duplicateRecords += 1; return; }
+				const id = stableId("event", canonical(["event-v5", logicalKey]));
 				const authorship = classifyAuthorship(from, row.IsSender, ownerUsername);
 				const participant = from ? person(from, from, source) : null;
 				if (participant && !conversation.participantIds.includes(participant.id)) conversation.participantIds.push(participant.id);
@@ -246,6 +318,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 					assetIds: [], mediaReferenceIds: parseMediaReferences(row["Media IDs"]), raw,
 				};
 				events.set(id, event);
+				partition.set(logicalKey, event);
 				conversation.eventIds.push(id);
 				coverage.sections[section]!.recordCount += 1;
 				if (authorship === "unknown" || authorship === "conflicting") coverage.unknownAuthors += 1;
@@ -254,6 +327,17 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 			});
 		}
 	}
+	// Only the whole input can prove an old sanitized-row partition still denotes one logical row.
+	const retainedIds = new Map<string, string>();
+	for (const [legacyId, partition] of eventPartitions) {
+		if (partition.size !== 1) continue;
+		const event = [...partition.values()][0]!;
+		events.delete(event.id);
+		retainedIds.set(event.id, legacyId);
+		event.id = legacyId;
+		events.set(legacyId, event);
+	}
+	for (const conversation of conversations.values()) conversation.eventIds = conversation.eventIds.map((id) => retainedIds.get(id) ?? id);
 	for (const conversation of conversations.values()) {
 		const proof = scopeProofs.get(conversation.id)!;
 		const recipientId = proof.direct.size === 1 ? [...proof.direct.keys()][0]! : null;
@@ -391,7 +475,8 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	for (const name of ["chats", "snaps", "memories"]) if (coverage.sections[name]?.status === "missing") coverage.warnings.push(`The ${name} section is absent from these ZIP parts.`);
 	return { fingerprint, identityVerified, revision: input.revision ?? fingerprint, normalizationVersion: NORMALIZATION_VERSION, ownerUsername, timezone: "UTC",
 		participants: [...participants.values()].sort((a, b) => a.id.localeCompare(b.id)), conversations: [...conversations.values()].sort((a, b) => a.id.localeCompare(b.id)),
-		events: sortedEvents, assets: [...assets.values()].sort((a, b) => a.id.localeCompare(b.id)), links, coverage, unsupported };
+		events: sortedEvents, assets: [...assets.values()].sort((a, b) => a.id.localeCompare(b.id)), links, coverage, unsupported,
+		queryEvidence: null, queryEvidenceUnavailableReason: "producer-incomplete" };
 }
 
 export function normalizeTime(raw: unknown, rawMicroseconds?: unknown): NormalizedTime {

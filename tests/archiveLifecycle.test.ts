@@ -4,6 +4,7 @@ import { BlobWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { useArchiveStore } from "../src/stores/archive";
 import { createArchiveSession } from "../src/lib/snapArchive";
 import { buildSnapZipIndex, readSnapZipEntryContent } from "../src/lib/snapZip";
+import { loadArchiveDataset } from "../src/lib/dataset";
 
 async function archiveFile(files: Record<string, string>): Promise<File> {
 	const writer = new ZipWriter(new BlobWriter("application/zip"));
@@ -12,6 +13,21 @@ async function archiveFile(files: Record<string, string>): Promise<File> {
 }
 
 describe("archive lifecycle and limits", () => {
+	it("rejects a canceled dataset load and permits a fresh attested load from the same reader", async () => {
+		const session = await createArchiveSession([await archiveFile({
+			"json/chat_history.json": '{"maya":[{"From":"owner","Media Type":"TEXT","Content":"retained words"}]}',
+		})]);
+		try {
+			const controller = new AbortController(); controller.abort();
+			await expect(loadArchiveDataset(session, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+			const dataset = await loadArchiveDataset(session);
+			expect(dataset.events).toHaveLength(1);
+			expect(dataset.events[0]?.source).toMatchObject({ recordPointer: "/maya/0", entryOrdinal: 0, documentByteLength: 74 });
+			expect(dataset.events[0]?.source.documentSha256).toMatch(/^[a-f0-9]{64}$/);
+			expect(dataset.queryEvidence).toBeNull();
+		} finally { session.reader.dispose(); }
+	});
+
 	it("canceling an in-flight import prevents old success and permits a valid retry", async () => {
 		setActivePinia(createPinia());
 		const store = useArchiveStore();

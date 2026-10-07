@@ -1,4 +1,5 @@
 import type { SnapZipEntryId } from "../lib/snapZip";
+import type { QueryEvidence } from "./archiveQuery";
 
 export type MediaKind = "text" | "image" | "video" | "audio" | "sticker" | "gif" | "attachment" | "unknown";
 export type LinkState = "confirmed" | "inferred" | "ambiguous" | "unlinked";
@@ -11,6 +12,9 @@ export interface SourceReference {
 	path: string;
 	recordPointer: string;
 	entryOrdinal?: number;
+	/** SHA-256 of decompressed original JSON bytes, supplied by the local reader. */
+	documentSha256?: string;
+	documentByteLength?: number;
 }
 
 export interface Participant {
@@ -134,6 +138,9 @@ export interface ArchiveDataset {
 	links: MediaLink[];
 	coverage: ArchiveCoverage;
 	unsupported: UnsupportedEvidence[];
+	/** Only a complete producer may publish canonical query evidence. Legacy fixtures omit it. */
+	queryEvidence?: QueryEvidence | null;
+	queryEvidenceUnavailableReason?: "producer-incomplete";
 }
 
 export interface ArchiveQuery {

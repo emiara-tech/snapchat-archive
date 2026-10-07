@@ -150,13 +150,14 @@ describe("normalized local dataset", () => {
 		expect(right.coverage).toEqual(left.coverage);
 	});
 
-	it("deduplicates repeated source records while preserving their occurrences and genuine repeats", () => {
+	it("keeps text-only document rows separate because decoded equality cannot attest copies", () => {
 		const input = fixture();
 		input.documents.push({ ...input.documents.find((document) => document.path === "json/chat_history.json")!, sourceId: "second-part" });
 		const dataset = normalizeArchiveDataset(input);
-		expect(dataset.events).toHaveLength(5);
-		expect(dataset.events.every((event) => event.sources.length === 2)).toBe(true);
-		expect(dataset.coverage.duplicateRecords).toBe(5);
+		expect(dataset.events).toHaveLength(10);
+		expect(dataset.events.every((event) => event.sources.length === 1)).toBe(true);
+		expect(dataset.coverage.duplicateRecords).toBe(0);
+		expect(dataset.queryEvidence).toBeNull();
 	});
 
 	it("keeps duplicate exact media candidates ambiguous rather than choosing a file", () => {
