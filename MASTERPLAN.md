@@ -118,8 +118,8 @@ App authentication, the user-funded OpenRouter path, and the first onboarding sl
 flowchart TD
     Foundation[0: Delivery foundation] --> Identity[1: App identity and funded AI access]
     Foundation --> Arrival[0.1: Demo and archive request]
-    Identity --> Return[Consented reminders and return]
-    Arrival --> Return
+    Arrival --> Return[Account-free return and import]
+    Arrival --> Reminders[Consented reminders]
     Registration[OpenAI website registration] --> ChatGPT[Approved ChatGPT identity and plan path]
     ChatGPT --> Identity
     Foundation --> Dataset[2: Traceable dataset]
