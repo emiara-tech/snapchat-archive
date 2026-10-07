@@ -1,19 +1,27 @@
 import { expect, test } from "@playwright/test";
 import { BlobWriter, TextReader, Uint8ArrayReader, ZipWriter } from "@zip.js/zip.js";
 
-test("published JavaScript and stylesheets are served as assets", async ({ request }) => {
-	const response = await request.get("/");
-	expect(response.ok()).toBe(true);
-	const html = await response.text();
-	const scriptPath = /<script[^>]*src="([^"]+)"/.exec(html)?.[1];
-	const stylePath = /<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/.exec(html)?.[1];
-	if (!scriptPath || !stylePath) throw new Error("The app entry assets are missing");
-	const script = await request.get(scriptPath);
-	expect(script.ok()).toBe(true);
-	expect(script.headers()["content-type"]).toMatch(/(?:text|application)\/javascript/);
-	const style = await request.get(stylePath);
-	expect(style.ok()).toBe(true);
-	expect(style.headers()["content-type"]).toMatch(/text\/css/);
+test("direct pages serve the current JavaScript and stylesheets as assets", async ({ request }) => {
+	let currentScript: string | undefined;
+	let currentStyle: string | undefined;
+	for (const path of ["/", "/import", "/welcome", "/photos", "/missing-page"]) {
+		const response = await request.get(path);
+		expect(response.ok(), `Page ${path} should be available`).toBe(true);
+		const html = await response.text();
+		const scriptPath = /<script[^>]*src="([^"]+)"/.exec(html)?.[1];
+		const stylePath = /<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/.exec(html)?.[1];
+		if (!scriptPath || !stylePath) throw new Error(`The entry assets are missing on ${path}`);
+		currentScript ??= scriptPath;
+		currentStyle ??= stylePath;
+		expect(scriptPath, `Page ${path} should reference the current release`).toBe(currentScript);
+		expect(stylePath, `Page ${path} should reference the current release`).toBe(currentStyle);
+		const script = await request.get(scriptPath);
+		expect(script.ok()).toBe(true);
+		expect(script.headers()["content-type"]).toMatch(/(?:text|application)\/javascript/);
+		const style = await request.get(stylePath);
+		expect(style.ok()).toBe(true);
+		expect(style.headers()["content-type"]).toMatch(/text\/css/);
+	}
 });
 
 test("a failed import can recover, and removing files clears the import selection", async ({ page }) => {
@@ -51,15 +59,17 @@ test("a failed import can recover, and removing files clears the import selectio
 
 test("multipart archives display local images, filter by year, and reset the session", async ({ page }) => {
 	const pageErrors: string[] = [];
-	const requestHosts = new Set<string>();
+	const requests: { url: string; method: string; archiveSelected: boolean }[] = [];
+	let archiveSelected = false;
 	page.on("pageerror", (error) => pageErrors.push(error.message));
 	page.on("request", (request) => {
 		const url = new URL(request.url());
 		if (url.protocol === "http:" || url.protocol === "https:") {
-			requestHosts.add(url.hostname);
+			requests.push({ url: url.href, method: request.method(), archiveSelected });
 		}
 	});
 	await page.goto("/import");
+	await page.waitForLoadState("networkidle");
 	const jpeg = await page.evaluate(() => {
 		const canvas = document.createElement("canvas");
 		canvas.width = 8;
@@ -91,6 +101,7 @@ test("multipart archives display local images, filter by year, and reset the ses
 		"memories/2026-01-01_recent-main.jpg": image,
 		"memories/2025-01-01_older-main.jpg": image,
 	});
+	archiveSelected = true;
 	await page.locator('input[type="file"]').setInputFiles([
 		{ name: "metadata.zip", mimeType: "application/zip", buffer: metadata },
 		{ name: "media.zip", mimeType: "application/zip", buffer: media },
@@ -118,12 +129,22 @@ test("multipart archives display local images, filter by year, and reset the ses
 	await expect(page.locator(".photos-grid > *")).toHaveCount(0);
 	await page.getByRole("button", { name: "Start over", exact: true }).click();
 	await expect(page).toHaveURL(/\/$/);
+	archiveSelected = false;
 	await page.goto("/photos");
 	await expect(page).toHaveURL(/\/import$/);
 	await expect(page.locator(".photos-grid")).toHaveCount(0);
 	await page.waitForLoadState("networkidle");
 	expect(pageErrors).toEqual([]);
-	expect([...requestHosts]).toEqual([new URL(page.url()).hostname]);
+	const origin = new URL(page.url()).origin;
+	const unexpectedRequests = requests.filter((request) => {
+		const url = new URL(request.url);
+		if (url.origin === origin) return request.archiveSelected && request.method !== "GET";
+		// Cloudflare may inject this public script while no archive is selected.
+		return request.archiveSelected || request.method !== "GET"
+			|| url.hostname !== "static.cloudflareinsights.com"
+			|| !/^\/beacon\.min\.js(?:\/v[\da-z]+)?$/.test(url.pathname);
+	});
+	expect(unexpectedRequests).toEqual([]);
 });
 
 test("direct archive pages require an import, and mobile navigation works", async ({ page }) => {

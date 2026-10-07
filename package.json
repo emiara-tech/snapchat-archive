@@ -3,13 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run tests",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "env:check": "varlock load",
+    "env:run": "varlock run"
   },
   "dependencies": {
     "@lucide/vue": "^1.17.0",
@@ -23,9 +28,11 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.12.0",
+    "@varlock/vite-integration": "^1.5.2",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/tsconfig": "^0.9.0",
     "typescript": "~5.9.3",
+    "varlock": "^1.21.1",
     "vite": "^8.0.1",
     "vite-plugin-vue-devtools": "^8.1.2",
     "vitest": "^4.1.4",
