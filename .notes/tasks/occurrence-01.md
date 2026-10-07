@@ -4,6 +4,8 @@ Accepted producer contract after independent design review, distinct correction 
 
 Originating acceptance: [Phase 2](../specs/phase-2.md), [Phase 3](../specs/phase-3.md), [Phase 5](../specs/phase-5.md), [QUERY-01](query-01.md) and its [independent oracle](query-01-oracle.md). [Design acceptance](../reviews/occurrence-01-design.md) records the separate correction/recheck.
 
+Stage 1's byte-proof and row-identity code is accepted at `d88c7b2`. [Stage 2's exact binding](occurrence-01-stage-2.md), [literal oracle](occurrence-01-stage-2-oracle.md) and [binding review](../reviews/occurrence-01-stage-2-binding.md) govern the next serial implementation. Complete QUERY capability and the remaining producer stages stay open.
+
 ## Value and bounded outcome
 
 The owner can search one historical use of a photo without borrowing a date, person or caption from another use. Repeated saves remain separate. Copies of the same document add source proof without inventing more history. Missing files and uncertain references remain inspectable. Every query fact resolves to the exact local ZIP entry and row that supports it.

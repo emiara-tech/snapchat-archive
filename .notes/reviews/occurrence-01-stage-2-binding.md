@@ -1,0 +1,15 @@
+# OCCURRENCE-01 stage-2 binding accepted
+
+Workspace authored the [exact staged binding](../tasks/occurrence-01-stage-2.md). Foundation independently reviewed it against the accepted producer/general preflight, frozen QUERY DTOs/code/oracle, ORDERING and original phases 2/3/5. Root made the distinct OCC2-B1/B2 correction. Foundation rechecked both axes and accepted with no remaining finding. This accepts the binding, not code or measurements.
+
+OCC2-B1 removed wording that permitted content-based physical deduplication. Every distinct source/path/ordinal entry retains its resource ID despite equal bytes/name/size/CRC. Compatibility assetIds remove repeated same-ID memberships only. Historical slots and per-slot links remain separate. The mediaReferenceIds compatibility array retains actual token strings.
+
+OCC2-B2 binds new fields to the frozen DTO scalar/code-point domains. A required invalid ID/locator fails the whole preparation safely; it is never silently omitted, surrogate-repaired or relabelled as missing byte proof. Unsafe reference tokens retain exact ordinal diagnostics without occurrences. Unsupported nullable Location/declaration values become null plus one exact owned-field diagnostic, preserving a recognized save. Oversized values fail admission rather than becoming truncated success. Valid paired Unicode and local filenames with internal spaces remain supported.
+
+One nullable readonly envelope reuses accepted occurrence/source/resource DTO subsets with actual NormalizedTime. It has no complete capability flag or fake QueryTime. Source-copy proof, numeric positions, minimal missing metadata and candidate-specific sources remain exact. Available resources have physical-only proof; missing resources cite declaring rows. No second parser/resolver/model, owner-confirmation helper, layer resolver or UI activation is authorized.
+
+Finite counts and incremental encoded admission include source-copy/diagnostic growth, candidates, compatibility links and new missing metadata. Guards run before resource/target expansion even when missing document proof keeps the staged envelope null. Overrides only lower known positive safe-integer ceilings without invoking accessors. Failure publishes no partial dataset and preserves reader ownership for retry.
+
+Pre-code DTO encoding counted 90,866,776 bytes for 100,000 sparse text rows including absence diagnostics, and 6,570,022 expanded bytes for 4,096 repeated slots including compatibility links. Those measurements are synthetic proposed representations, not producer output, heap, latency, cancellation or performance evidence. Actual produced accounting, exact-fit/overflow public cases, retry, complete units/build and unchanged actual-ZIP browsers remain code acceptance prerequisites.
+
+Stage-2 ceilings do not admit Phase 8's actual million-event import. Later measured representation/policy work must address that gate. Complete time/membership/layer/worker/query publication, 100,000-event desktop responsiveness, cross-room activation and full phases remain open. No code, tests, private data, provider request or external service changed during binding review.

@@ -2,6 +2,8 @@
 
 Experience prepared the bounded reference/Memory preflight. Root resolved count, proof and supported-field bindings; foundation independently reviewed them against the [producer](../tasks/occurrence-01.md), frozen QUERY/ORDERING contracts and original phases 2/3/5. Both design axes found no actionable defect. Exact type/resource binding remains a precondition before code.
 
+That precondition is now accepted in [the exact binding review](occurrence-01-stage-2-binding.md), with its [literal oracle](../tasks/occurrence-01-stage-2-oracle.md). Implementation and measurement acceptance remain open.
+
 The accepted clarifications are:
 
 - Supported slots retain ordinal gaps. Malformed positions remain exact diagnostics with unknown remainder, rather than guessed historical appearances. Absent, unsupported and known-empty fields remain distinct. Event kind alone does not invent an implicit reference.
