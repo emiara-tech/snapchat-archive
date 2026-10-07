@@ -6,6 +6,8 @@
 
 Use [MASTERPLAN.md](MASTERPLAN.md) for product goals and phase completion criteria, [CONTEXT.md](CONTEXT.md) for domain language, [auth.md](auth.md) for authentication and AI access, and [docs/visualization.md](docs/visualization.md) for rendering contracts. Desktop is the design target; mobile work is outside the product scope.
 
+When starting or resuming delivery, including after context compaction, read [.notes/progress.md](.notes/progress.md). Update task outcomes and remaining gates after review handoffs and verified results. Maintain future-session ideas in [.notes/backlog.md](.notes/backlog.md); keep new delivery context under `.notes/`.
+
 For onboarding and reminders, read [docs/onboarding.md](docs/onboarding.md). For complete/curated bundles, overlays, or external media transfers, read [docs/export-destinations.md](docs/export-destinations.md).
 
 ## Responsibility
