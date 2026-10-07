@@ -3,7 +3,7 @@
 		<section class="hero">
 			<div class="container hero-grid">
 				<div class="hero-copy">
-					<span class="eyebrow">Free software</span>
+					<span class="eyebrow">Hello world</span>
 					<h1>Your data, your memories.</h1>
 					<p class="hero-subtitle">
 						Open up a memorybox from your own digital backyard. Explore forgotten memories. Look at your Snapchat data how you remember it, not how Snap Inc. stores it.
