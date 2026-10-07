@@ -9,6 +9,7 @@ Use [MASTERPLAN.md](MASTERPLAN.md) for product goals and phase completion criter
 ## Responsibility
 
 - The agent owns engineering delivery, including implementation, debugging, testing, maintenance, and verification of authorized releases.
+- Delivery includes pushing verified work to `dev`, reviewing the `dev` to `main` pull request, handling permitted approvals and merging after checks pass, and verifying the production deployment. A local commit is an intermediate step.
 - The user sets product direction and evaluates the running app. They do not inspect code, so code review and technical verification are the agent's responsibility.
 - Carry authorized work through to a verified outcome. Resolve routine technical decisions independently; ask when a missing product decision or external access prevents progress.
 - Treat production readiness, privacy, and stability as requirements for every change. Fix known failures in the affected user journey before releasing it.
