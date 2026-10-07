@@ -35,7 +35,9 @@
 - `tests/` contains Vitest coverage for parser, archive, and stats behavior.
 - `public/` contains static assets.
 - `dist/` is build output and should not be edited by hand.
-- Real archives and personal media are private, ignored test inputs. Preserve the originals and keep their contents out of commits, screenshots shared with others, and external services.
+- The user authorizes the agent to use the private test archive for testing, including parsing, browser interactions, media playback, and export verification, without asking for permission again.
+- This repository is public. Preserve the original archive and keep it, personal media, and all derived private data out of commits and external services. Keep logs, screenshots, recordings, and extracted files containing real archive data private and outside tracked paths.
+- Use synthetic data for committed test fixtures and publicly shared testing evidence.
 
 ## Success criteria
 
