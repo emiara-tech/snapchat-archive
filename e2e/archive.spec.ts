@@ -154,7 +154,7 @@ test("direct archive pages require an import, and mobile navigation works", asyn
 	await page.getByRole("button", { name: "Open menu", exact: true }).click();
 	await page.getByRole("button", { name: "Privacy", exact: true }).click();
 	await expect(
-		page.getByRole("heading", { name: "Nothing you load here is sent anywhere." }),
+		page.getByRole("heading", { name: "Your archive stays in your browser." }),
 	).toBeVisible();
 	await page.goto("/missing-page");
 	await expect(page).toHaveURL(/\/$/);
