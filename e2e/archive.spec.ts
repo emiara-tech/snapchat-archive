@@ -1,6 +1,21 @@
 import { expect, test } from "@playwright/test";
 import { BlobWriter, TextReader, Uint8ArrayReader, ZipWriter } from "@zip.js/zip.js";
 
+test("published JavaScript and stylesheets are served as assets", async ({ request }) => {
+	const response = await request.get("/");
+	expect(response.ok()).toBe(true);
+	const html = await response.text();
+	const scriptPath = /<script[^>]*src="([^"]+)"/.exec(html)?.[1];
+	const stylePath = /<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/.exec(html)?.[1];
+	if (!scriptPath || !stylePath) throw new Error("The app entry assets are missing");
+	const script = await request.get(scriptPath);
+	expect(script.ok()).toBe(true);
+	expect(script.headers()["content-type"]).toMatch(/(?:text|application)\/javascript/);
+	const style = await request.get(stylePath);
+	expect(style.ok()).toBe(true);
+	expect(style.headers()["content-type"]).toMatch(/text\/css/);
+});
+
 test("a failed import can recover, and removing files clears the import selection", async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/import");
