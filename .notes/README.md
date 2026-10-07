@@ -8,5 +8,6 @@ This directory keeps delivery context together. Product definitions and conventi
 - Maintain [the ideas backlog](backlog.md) when new ideas arrive. Ideas stay outside the active plan until deliberately promoted in their own session.
 - Keep [idea details](ideas/cinematic-arrival.md) as future-session context. Draft targets do not become current delivery requirements by being written down.
 - Record concise accepted correction reviews under `reviews/` and link them from progress. Preserve the original findings, resolution, verification and remaining gates; keep raw execution logs outside tracked notes.
+- Read the owner's [vision](VISION.md) and [intended flow](FLOW.md) for product motivation. The older [copy checklist](TODO.md) is historical context; current assignments and completion status live in progress.
 
 After a review handoff, update the relevant progress row with its outcome, reproducible checks, unresolved findings and next action. Keep private archive material, credentials, raw logs, temporary experiments and generated screenshots outside tracked notes. Preserve concise task results rather than a transcript of every command.
