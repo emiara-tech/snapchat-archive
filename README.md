@@ -1,5 +1,15 @@
 # Goodbye Chat
 
+The product direction and delivery phases are in [MASTERPLAN.md](MASTERPLAN.md). Shared terms are defined in [CONTEXT.md](CONTEXT.md), with integration contracts in [auth.md](auth.md) and [docs/visualization.md](docs/visualization.md).
+
+## Development configuration
+
+Use Node.js 22.12 or newer and pnpm. Environment variables are defined in `.env.schema` and validated by Varlock when Vite starts or builds. Varlock generates `src/env.d.ts`; regenerate it with `pnpm run env:check` when the schema changes.
+
+Store private local values in `.env.local`, which is ignored by Git. `.env.example` contains the empty template. `OPENROUTER_API_KEY` is optional and intended for explicitly authorized development work with synthetic inputs. It is sensitive, must stay out of browser code, and must never become a shared production billing source. Local archive features require no key.
+
+Run `pnpm run env:check` to validate configuration. Run scripts that need private environment variables with `pnpm exec varlock run -- <command>`. For agent runs, use noninteractive output and add `--redact-stdout` before `--` to require redaction. Configure deployed secrets through the hosting platform's environment controls, with separate scopes for development, previews, and production.
+
 # Why
 Snapchat today is not what it used to be. I am not who I used to be either. When I was 12 I though snapchat was great.
 

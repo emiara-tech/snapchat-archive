@@ -4,6 +4,8 @@
 
 `snapchat-archive` is a local-first Vue/Vite app for importing Snapchat export zips, parsing the archive in the browser, revisiting photos and conversations, and exporting memories.
 
+Use [MASTERPLAN.md](MASTERPLAN.md) for product goals and phase completion criteria, [CONTEXT.md](CONTEXT.md) for domain language, [auth.md](auth.md) for authentication and AI access, and [docs/visualization.md](docs/visualization.md) for rendering contracts. Desktop is the design target; mobile work is outside the product scope.
+
 ## Responsibility
 
 - The agent owns engineering delivery, including implementation, debugging, testing, maintenance, and verification of authorized releases.
@@ -22,6 +24,8 @@
 ## Working rules
 
 - Use pnpm for Node, JavaScript, and TypeScript work, and pixi for Python environments.
+- Read configuration contracts from `.env.schema`. Run agent commands that need secrets with `pnpm exec varlock run --redact-stdout -- <command>` and noninteractive output. Keep secret values in ignored local files or deployment secret stores and out of agent context. Regenerate environment types rather than editing them.
+- AI usage must be funded by the connected user's authorized allowance. Do not add a shared owner-funded production key or silently switch billing sources; development keys are only for explicitly authorized checks.
 - Read the existing code and tests before changing behavior.
 - Keep edits small unless a broader refactor clearly improves the project.
 - Do not edit generated output, build artifacts, `node_modules`, or imported example data.

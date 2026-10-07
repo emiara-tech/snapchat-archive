@@ -11,6 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.env*
+!.env.schema
+!.env.example
+.varlock/
 playwright-report/
 test-results/
 

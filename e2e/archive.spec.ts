@@ -1,19 +1,27 @@
 import { expect, test } from "@playwright/test";
 import { BlobWriter, TextReader, Uint8ArrayReader, ZipWriter } from "@zip.js/zip.js";
 
-test("published JavaScript and stylesheets are served as assets", async ({ request }) => {
-	const response = await request.get("/");
-	expect(response.ok()).toBe(true);
-	const html = await response.text();
-	const scriptPath = /<script[^>]*src="([^"]+)"/.exec(html)?.[1];
-	const stylePath = /<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/.exec(html)?.[1];
-	if (!scriptPath || !stylePath) throw new Error("The app entry assets are missing");
-	const script = await request.get(scriptPath);
-	expect(script.ok()).toBe(true);
-	expect(script.headers()["content-type"]).toMatch(/(?:text|application)\/javascript/);
-	const style = await request.get(stylePath);
-	expect(style.ok()).toBe(true);
-	expect(style.headers()["content-type"]).toMatch(/text\/css/);
+test("direct pages serve the current JavaScript and stylesheets as assets", async ({ request }) => {
+	let currentScript: string | undefined;
+	let currentStyle: string | undefined;
+	for (const path of ["/", "/import", "/welcome", "/photos", "/missing-page"]) {
+		const response = await request.get(path);
+		expect(response.ok(), `Page ${path} should be available`).toBe(true);
+		const html = await response.text();
+		const scriptPath = /<script[^>]*src="([^"]+)"/.exec(html)?.[1];
+		const stylePath = /<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/.exec(html)?.[1];
+		if (!scriptPath || !stylePath) throw new Error(`The entry assets are missing on ${path}`);
+		currentScript ??= scriptPath;
+		currentStyle ??= stylePath;
+		expect(scriptPath, `Page ${path} should reference the current release`).toBe(currentScript);
+		expect(stylePath, `Page ${path} should reference the current release`).toBe(currentStyle);
+		const script = await request.get(scriptPath);
+		expect(script.ok()).toBe(true);
+		expect(script.headers()["content-type"]).toMatch(/(?:text|application)\/javascript/);
+		const style = await request.get(stylePath);
+		expect(style.ok()).toBe(true);
+		expect(style.headers()["content-type"]).toMatch(/text\/css/);
+	}
 });
 
 test("a failed import can recover, and removing files clears the import selection", async ({ page }) => {
@@ -53,13 +61,14 @@ test("multipart archives display local images, filter by year, and reset the ses
 	const pageErrors: string[] = [];
 	const requestHosts = new Set<string>();
 	page.on("pageerror", (error) => pageErrors.push(error.message));
+	await page.goto("/import");
+	await page.waitForLoadState("networkidle");
 	page.on("request", (request) => {
 		const url = new URL(request.url());
 		if (url.protocol === "http:" || url.protocol === "https:") {
 			requestHosts.add(url.hostname);
 		}
 	});
-	await page.goto("/import");
 	const jpeg = await page.evaluate(() => {
 		const canvas = document.createElement("canvas");
 		canvas.width = 8;
