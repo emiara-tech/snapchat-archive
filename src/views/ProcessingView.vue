@@ -6,6 +6,11 @@ import { useArchiveStore } from "../stores/archive";
 const router = useRouter();
 const archiveStore = useArchiveStore();
 
+function chooseDifferentFiles() {
+	archiveStore.resetArchive();
+	router.replace("/import");
+}
+
 async function runProcessingSequence() {
 	if (!archiveStore.selectedFiles.length) {
 		router.push("/import");
@@ -42,7 +47,21 @@ onMounted(() => {
 <template>
 	<div class="page">
 		<div class="container processing-shell">
-			<div class="processing-content card">
+			<div
+				v-if="archiveStore.importError"
+				class="processing-content card"
+				role="alert"
+			>
+				<h1>Couldn't open your archive.</h1>
+				<p class="processing-subtitle">
+					Choose the original ZIP files from your Snapchat download and try
+					again. If the download is incomplete, download it again first.
+				</p>
+				<button class="btn btn-primary" @click="chooseDifferentFiles">
+					Choose different ZIPs
+				</button>
+			</div>
+			<div v-else class="processing-content card">
 				<div class="processing-icon">
 					<div class="spinner"></div>
 				</div>
@@ -120,7 +139,7 @@ onMounted(() => {
 							}"
 							>✓</span
 						>
-						<span>Open review and export views</span>
+						<span>Open your archive</span>
 					</div>
 				</div>
 			</div>

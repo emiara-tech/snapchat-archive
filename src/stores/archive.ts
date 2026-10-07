@@ -96,10 +96,10 @@ export const useArchiveStore = defineStore("archive", () => {
 	});
 
 	function startProcessing() {
-		importError.value = null;
-		statsError.value = null;
+		const files = selectedFiles.value;
+		resetArchive();
+		selectedFiles.value = files;
 		isProcessing.value = true;
-		processingProgress.value = 0;
 	}
 
 	function updateProgress(progress: number, status: string) {
@@ -131,6 +131,7 @@ export const useArchiveStore = defineStore("archive", () => {
 			archiveStats.value = null;
 			initializeAnalyzers(session);
 		} catch (error) {
+			isProcessing.value = false;
 			importError.value =
 				error instanceof Error ? error.message : "Failed to import archive";
 			throw error;

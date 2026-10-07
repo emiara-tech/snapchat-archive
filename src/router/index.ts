@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
+import { useArchiveStore } from "../stores/archive";
 
 const routes: RouteRecordRaw[] = [
 	{
@@ -24,7 +25,7 @@ const routes: RouteRecordRaw[] = [
 		path: "/photos",
 		name: "photos",
 		component: () => import("../views/PhotosView.vue"),
-		meta: { title: "Review Your Photos | Goodbye Chat" },
+		meta: { title: "Review Your Photos | Goodbye Chat", requiresArchive: true },
 	},
 	{
 		path: "/privacy",
@@ -36,8 +37,9 @@ const routes: RouteRecordRaw[] = [
 		path: "/welcome",
 		name: "welcome",
 		component: () => import("../views/WelcomeView.vue"),
-		meta: { title: "Welcome | Goodbye Chat" },
+		meta: { title: "Welcome | Goodbye Chat", requiresArchive: true },
 	},
+	{ path: "/:pathMatch(.*)*", redirect: "/" },
 ];
 
 const router = createRouter({
@@ -52,6 +54,10 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _from, next) => {
+	if (to.meta.requiresArchive && !useArchiveStore().isImported) {
+		next({ name: "import", replace: true });
+		return;
+	}
 	document.title = (to.meta.title as string) || "Goodbye Chat";
 	next();
 });

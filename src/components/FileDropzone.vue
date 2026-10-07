@@ -113,6 +113,7 @@ function removeFile() {
 	if (fileInput.value) {
 		fileInput.value.value = "";
 	}
+	emit("file", []);
 }
 
 function formatFileSize(bytes: number): string {
