@@ -32,6 +32,7 @@ For onboarding and reminders, read [docs/onboarding.md](docs/onboarding.md). For
 - Read configuration contracts from `.env.schema`. Run agent commands that need secrets with `pnpm exec varlock run --redact-stdout -- <command>` and noninteractive output. Keep secret values in ignored local files or deployment secret stores and out of agent context. Regenerate environment types rather than editing them.
 - AI usage must be funded by the connected user's authorized allowance. Do not add a shared owner-funded production key or silently switch billing sources; development keys are only for explicitly authorized checks.
 - Read the existing code and tests before changing behavior.
+- When implementing features or fixing bugs, apply the [test-driven development principle](AGENT.md) to guide correctness and code quality.
 - Keep edits small unless a broader refactor clearly improves the project.
 - Do not edit generated output, build artifacts, `node_modules`, or imported example data.
 - Treat archive parsing and export paths as sensitive: avoid assumptions that could drop, misread, or silently rewrite user data.
