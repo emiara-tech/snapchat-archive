@@ -2,8 +2,8 @@
 	<div class="page">
 		<div class="container container-narrow">
 			<header class="page-header">
-				<span class="eyebrow">Your data • No servers</span>
-				<h1>Nothing you load here is sent anywhere.</h1>
+				<span class="eyebrow">Your archive stays local</span>
+				<h1>Your archive stays in your browser.</h1>
 				<p class="page-subtitle">
 					This is the privacy policy for Goodbye Chat. It is short because
 					there is not much to say: the app runs entirely in your browser and
@@ -14,9 +14,11 @@
 			<section class="privacy-section">
 				<h2>What we collect</h2>
 				<p>
-					<strong>Nothing.</strong> Goodbye Chat has no accounts, no analytics,
-					no crash reporting, and no telemetry of any kind. There is no backend
-					to send data to.
+					Goodbye Chat has no accounts or crash reporting. When enabled for
+					this site, cookie-free Vercel Web Analytics sends anonymous page
+					views and browsing metadata to Vercel, including page URLs,
+					referrers, approximate location, browser and device details.
+					Your archive contents are never included in analytics.
 				</p>
 			</section>
 
@@ -31,25 +33,29 @@
 				<ul>
 					<li>No account required to use the app</li>
 					<li>No server receives your takeout file</li>
-					<li>No data is written outside your browser session</li>
-					<li>Closing the tab ends the session completely</li>
+					<li>No archive data is written outside your browser session</li>
+					<li>Closing the tab ends your archive session completely</li>
 				</ul>
 			</section>
 
 			<section class="privacy-section">
 				<h2>Data retention</h2>
 				<p>
-					Nothing persists after you close the tab. Goodbye Chat does not write
-					to localStorage, does not set cookies, and does not cache your archive
-					anywhere outside the active browser window.
+					Your archive does not persist after you close the tab. Goodbye Chat
+					does not write to localStorage, does not set cookies, and does not
+					cache your archive anywhere outside the active browser window.
 				</p>
 			</section>
 
 			<section class="privacy-section">
 				<h2>Third parties</h2>
 				<p>
-					No third-party analytics SDKs, tracking pixels, or advertising
-					scripts are loaded by this app.
+					The app loads Vercel's analytics script for page-view measurement
+					when analytics is enabled. See
+					<a href="https://vercel.com/docs/analytics/privacy-policy">
+						Vercel's analytics privacy policy
+					</a>
+					for details about the browsing metadata it collects and retains.
 				</p>
 				<p>
 					Goodbye Chat is an independent tool. It is not affiliated with,

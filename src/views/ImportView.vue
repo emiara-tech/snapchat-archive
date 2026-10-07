@@ -90,9 +90,9 @@ async function startImport() {
 						<h3 class="info-title">Privacy notes</h3>
 						<ul class="info-list">
 							<li>No sign-in wall.</li>
-							<li>No analytics.</li>
+							<li>Cookie-free page-view analytics when enabled.</li>
 							<li>
-								Your data stays in-browser.
+								Your archive stays in-browser.
 							</li>
 						</ul>
 					</section>
