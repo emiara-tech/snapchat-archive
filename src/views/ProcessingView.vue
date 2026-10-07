@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useArchiveStore } from "../stores/archive";
 
 const router = useRouter();
 const archiveStore = useArchiveStore();
+let active = true;
+onBeforeUnmount(() => { active = false; if (archiveStore.isProcessing) archiveStore.cancelProcessing(); });
 
 function chooseDifferentFiles() {
 	archiveStore.resetArchive();
@@ -21,10 +23,11 @@ async function runProcessingSequence() {
 
 	try {
 		await archiveStore.prepareArchive(archiveStore.selectedFiles);
+		if (!active) return;
 		archiveStore.completeProcessing();
 		router.push("/welcome");
 	} catch (error) {
-		console.error("Failed to process archive", error);
+		if (!active || (error instanceof Error && error.name === 'AbortError')) return;
 		archiveStore.updateProgress(0, "Failed to process archive");
 	}
 }
@@ -142,6 +145,7 @@ onMounted(() => {
 						<span>Open your archive</span>
 					</div>
 				</div>
+				<button class="btn btn-secondary" @click="chooseDifferentFiles">Cancel import</button>
 			</div>
 		</div>
 	</div>

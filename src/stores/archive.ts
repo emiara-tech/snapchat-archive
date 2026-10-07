@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import type {
 	ArchiveCapabilities,
 	ArchiveDiagnostics,
@@ -52,6 +52,13 @@ const EMPTY_DIAGNOSTICS: ArchiveDiagnostics = {
 };
 
 export const useArchiveStore = defineStore("archive", () => {
+	let generation = 0;
+	let importController = new AbortController();
+	function assertCurrent(expected: number) {
+		if (expected !== generation || importController.signal.aborted) {
+			throw new DOMException("The archive operation was canceled.", "AbortError");
+		}
+	}
 	const isImported = ref(false);
 	const isProcessing = ref(false);
 	const processingProgress = ref(0);
@@ -72,7 +79,7 @@ export const useArchiveStore = defineStore("archive", () => {
 	const isLoadingStats = ref(false);
 	const analysisManager = ref<AnalysisManager | null>(null);
 	const analysisResults = ref<Map<string, unknown>>(new Map());
-	const archiveSession = ref<ArchiveSession | null>(null);
+	const archiveSession = shallowRef<ArchiveSession | null>(null);
 	const selectedFiles = ref<File[]>([]);
 
 	const exportConfig = ref<ExportConfig>({
@@ -118,11 +125,17 @@ export const useArchiveStore = defineStore("archive", () => {
 		files: File[],
 		onProgress?: ArchiveProgressCallback,
 	): Promise<void> {
+		const expected = generation;
 		try {
 			const session = await createArchiveSession(files, (progress, status) => {
+				assertCurrent(expected);
 				updateProgress(progress, status);
 				onProgress?.(progress, status);
-			});
+			}, { signal: importController.signal });
+			if (expected !== generation) {
+				session.reader.dispose();
+				assertCurrent(expected);
+			}
 
 			archiveSession.value = session;
 			friendsList.value = session.metadata.friends;
@@ -131,6 +144,7 @@ export const useArchiveStore = defineStore("archive", () => {
 			archiveStats.value = null;
 			initializeAnalyzers(session);
 		} catch (error) {
+			if (expected !== generation || (error instanceof DOMException && error.name === "AbortError")) throw error;
 			isProcessing.value = false;
 			importError.value =
 				error instanceof Error ? error.message : "Failed to import archive";
@@ -144,6 +158,7 @@ export const useArchiveStore = defineStore("archive", () => {
 		if (isLoadingStats.value) return;
 
 		isLoadingStats.value = true;
+		const expected = generation;
 		statsError.value = null;
 		const { reader, metadata, index } = archiveSession.value;
 
@@ -152,24 +167,28 @@ export const useArchiveStore = defineStore("archive", () => {
 			const snap = parseSnapHistoryJson(
 				await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.snapHistory),
 			);
-			snapHistory.value = snap;
+			assertCurrent(expected);
 
 			updateProgress(35, "Loading chat history");
 			const chat = parseChatHistoryJson(
 				await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.chatHistory),
 			);
-			chatHistory.value = chat;
+			assertCurrent(expected);
 
 			updateProgress(60, "Loading story history");
 			const storyJson = parseStoryHistoryJson(
 				await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.storyHistory),
 			);
-			storiesList.value = storyJson?.["Your Story Views"] ?? [];
+			assertCurrent(expected);
 
 			updateProgress(75, "Loading memories metadata");
 			const memories = parseMemoriesHistoryJson(
 				await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.memoriesHistory),
 			);
+			assertCurrent(expected);
+			snapHistory.value = snap;
+			chatHistory.value = chat;
+			storiesList.value = storyJson?.["Your Story Views"] ?? [];
 			mediaRecords.value = memories;
 
 			updateProgress(90, "Computing stats");
@@ -184,11 +203,12 @@ export const useArchiveStore = defineStore("archive", () => {
 
 			updateProgress(100, "Done");
 		} catch (error) {
+			if (expected !== generation) return;
 			statsError.value =
 				error instanceof Error ? error.message : "Failed to load archive stats";
 			throw error;
 		} finally {
-			isLoadingStats.value = false;
+			if (expected === generation) isLoadingStats.value = false;
 		}
 	}
 
@@ -210,7 +230,10 @@ export const useArchiveStore = defineStore("archive", () => {
 
 	async function runAnalyzer(id: string) {
 		if (!analysisManager.value) return undefined;
-		const result = await analysisManager.value.runOne(id);
+		const expected = generation;
+		const manager = analysisManager.value;
+		const result = await manager.runOne(id);
+		assertCurrent(expected);
 		analysisResults.value = new Map(analysisManager.value.getCachedResults());
 		return result;
 	}
@@ -228,6 +251,10 @@ export const useArchiveStore = defineStore("archive", () => {
 	}
 
 	function resetArchive() {
+		generation += 1;
+		importController.abort();
+		importController = new AbortController();
+		archiveSession.value?.reader.dispose();
 		isImported.value = false;
 		isProcessing.value = false;
 		processingProgress.value = 0;
@@ -284,6 +311,7 @@ export const useArchiveStore = defineStore("archive", () => {
 		setSelectedFiles,
 		updateExportConfig,
 		resetArchive,
+		cancelProcessing: resetArchive,
 	};
 });
 

@@ -68,6 +68,6 @@ Every paid operation requires the initiating account's active funded connection,
 
 ## Verification and delivery slices
 
-Run `pnpm run build`, `pnpm run test`, and `pnpm run test:e2e` for user-facing changes. Verify measured values against independently specified synthetic messages, rather than calling the implementation to construct its expectations. Check the evidence editor, revision changes, network silence, and local discard in a real browser. Public examples use fictional messages and participants.
+Run `pnpm run build`, `pnpm run test`, and `pnpm run test:e2e` for user-facing changes. Verify measured values against independently specified synthetic messages, rather than calling the implementation to construct its expectations. Check the evidence editor, revision changes, network silence, and local discard in a real browser. Synthetic messages and participants are internal test fixtures only. A real profile shows the owner's selected evidence; the product has no public demo profile.
 
 First deliver a fully local owner-authored year profile with count/emoji/punctuation/word observations and inspectable examples. Extend multilingual and context policy, then evaluated sufficiency and evidence editing. Prepare the consent and enrichment contract without claiming live provider success. The full optional enrichment path needs an authorized bounded synthetic provider check; private archive permission does not grant external processing permission.

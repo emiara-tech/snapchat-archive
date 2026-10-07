@@ -1,6 +1,5 @@
 import {
 	BlobReader,
-	BlobWriter,
 	ZipReader,
 	type Entry,
 	type WorkerConfiguration,
@@ -16,6 +15,8 @@ export interface SnapZipSource {
 export interface SnapZipEntryId {
 	sourceId: SnapZipSourceId;
 	path: string;
+	/** Distinguishes repeated entry names within one ZIP. */
+	ordinal?: number;
 }
 
 export interface SnapZipEntryMeta {
@@ -23,6 +24,7 @@ export interface SnapZipEntryMeta {
 	compressedSize: number;
 	uncompressedSize: number;
 	isDirectory: boolean;
+	signature?: number;
 }
 
 export interface SnapZipIndex {
@@ -32,10 +34,51 @@ export interface SnapZipIndex {
 
 export interface BuildIndexOptions {
 	entryFilter?: (meta: SnapZipEntryMeta) => boolean;
+	signal?: AbortSignal;
+	limits?: Partial<ArchiveResourceLimits>;
+	onProgress?: (completedSources: number, totalSources: number, entries: number) => void;
 }
 
 export interface ReadEntryOptions {
 	asStream?: boolean;
+	signal?: AbortSignal;
+	maxBytes?: number;
+}
+
+export interface ArchiveResourceLimits {
+	maxEntries: number;
+	maxEntryBytes: number;
+	maxTotalBytes: number;
+	maxExpansionRatio: number;
+	maxReadBytes: number;
+}
+
+export const DEFAULT_ARCHIVE_RESOURCE_LIMITS: ArchiveResourceLimits = {
+	maxEntries: 500_000,
+	maxEntryBytes: 1024 * 1024 * 1024,
+	maxTotalBytes: 64 * 1024 * 1024 * 1024,
+	maxExpansionRatio: 1000,
+	maxReadBytes: 512 * 1024 * 1024,
+};
+
+export class ArchiveResourceLimitError extends Error {
+	readonly code = "archive_resource_limit";
+	readonly limit: keyof ArchiveResourceLimits;
+	constructor(limit: keyof ArchiveResourceLimits) {
+		super(`This archive exceeds the ${limit} safety limit. Try a smaller export or date range.`);
+		this.name = "ArchiveResourceLimitError";
+		this.limit = limit;
+	}
+}
+
+export function assertNotAborted(signal?: AbortSignal): void {
+	if (signal?.aborted) throw new DOMException("The archive operation was canceled.", "AbortError");
+}
+
+export function isSafeArchivePath(path: string): boolean {
+	return Boolean(path) && !path.startsWith("/") && !path.includes("\\")
+		&& !path.includes(":") && !path.includes("\0")
+		&& !path.split("/").some((part) => part === ".." || part === ".");
 }
 
 export type SnapZipEntryContent = ArrayBuffer | ReadableStream<Uint8Array>;
@@ -75,6 +118,7 @@ export class SnapZipEntryIsDirectoryError extends Error {
 interface SnapZipIndexInternals {
 	sourceMap: Map<SnapZipSourceId, SnapZipSource>;
 	entryMap: Map<string, SnapZipEntryMeta>;
+	limits: ArchiveResourceLimits;
 }
 
 const SNAP_INDEX_INTERNALS = new WeakMap<SnapZipIndex, SnapZipIndexInternals>();
@@ -88,11 +132,19 @@ export async function buildSnapZipIndex(
 	options?: BuildIndexOptions,
 ): Promise<SnapZipIndex> {
 	const normalizedSources = sources.map((source) => ({ ...source }));
+	const limits = { ...DEFAULT_ARCHIVE_RESOURCE_LIMITS, ...options?.limits };
+	for (const value of Object.values(limits)) {
+		if (!Number.isFinite(value) || value <= 0) throw new Error("Archive safety limits must be finite positive numbers.");
+	}
 	const sourceMap = new Map<SnapZipSourceId, SnapZipSource>();
 	const entryMap = new Map<string, SnapZipEntryMeta>();
 	const entries: SnapZipEntryMeta[] = [];
+	let totalBytes = 0;
+	let totalEntries = 0;
 
 	for (const source of normalizedSources) {
+		assertNotAborted(options?.signal);
+		if (sourceMap.has(source.id)) throw new Error("Archive ZIP source identities must be unique.");
 		sourceMap.set(source.id, source);
 		const reader = new ZipReader(
 			new BlobReader(source.file),
@@ -100,8 +152,22 @@ export async function buildSnapZipIndex(
 		);
 		try {
 			const zipEntries = await reader.getEntries();
-			for (const entry of zipEntries) {
-				const meta = toSnapEntryMeta(entry, source.id);
+			for (const [ordinal, entry] of zipEntries.entries()) {
+				assertNotAborted(options?.signal);
+				if (!isSafeArchivePath(entry.filename)) throw new Error("This archive contains an unsafe file path.");
+				const meta = toSnapEntryMeta(entry, source.id, ordinal);
+				totalEntries += 1;
+				if (totalEntries > limits.maxEntries) throw new ArchiveResourceLimitError("maxEntries");
+				if (!Number.isSafeInteger(meta.uncompressedSize) || meta.uncompressedSize < 0
+					|| !Number.isSafeInteger(meta.compressedSize) || meta.compressedSize < 0) {
+					throw new Error("This archive contains invalid file sizes.");
+				}
+				if (meta.uncompressedSize > limits.maxEntryBytes) throw new ArchiveResourceLimitError("maxEntryBytes");
+				totalBytes += meta.uncompressedSize;
+				if (totalBytes > limits.maxTotalBytes) throw new ArchiveResourceLimitError("maxTotalBytes");
+				if (meta.uncompressedSize / Math.max(meta.compressedSize, 1) > limits.maxExpansionRatio) {
+					throw new ArchiveResourceLimitError("maxExpansionRatio");
+				}
 				if (options?.entryFilter && !options.entryFilter(meta)) continue;
 				entries.push(meta);
 				entryMap.set(getEntryKey(meta.id), meta);
@@ -109,6 +175,7 @@ export async function buildSnapZipIndex(
 		} finally {
 			await safeClose(reader);
 		}
+		options?.onProgress?.(sourceMap.size, normalizedSources.length, totalEntries);
 	}
 
 	const index: SnapZipIndex = {
@@ -116,7 +183,7 @@ export async function buildSnapZipIndex(
 		entries,
 	};
 
-	SNAP_INDEX_INTERNALS.set(index, { sourceMap, entryMap });
+	SNAP_INDEX_INTERNALS.set(index, { sourceMap, entryMap, limits });
 	return index;
 }
 
@@ -126,9 +193,16 @@ export async function readSnapZipEntryContent(
 	options?: ReadEntryOptions,
 ): Promise<SnapZipEntryContent> {
 	const internals = ensureInternals(index);
-	if (!internals.entryMap.has(getEntryKey(entryId))) {
+	assertNotAborted(options?.signal);
+	const matches = index.entries.filter((entry) => entry.id.sourceId === entryId.sourceId
+		&& entry.id.path === entryId.path && (entryId.ordinal === undefined || entry.id.ordinal === entryId.ordinal));
+	if (!matches.length) {
 		throw new SnapZipEntryNotFoundError(entryId);
 	}
+	if (matches.length !== 1) throw new Error("This archive path has multiple occurrences. Select an exact source occurrence.");
+	const meta = matches[0]!;
+	const maxBytes = Math.min(options?.maxBytes ?? internals.limits.maxReadBytes, internals.limits.maxReadBytes);
+	if (meta.uncompressedSize > maxBytes) throw new ArchiveResourceLimitError("maxReadBytes");
 	const source = internals.sourceMap.get(entryId.sourceId);
 
 	if (!source) {
@@ -141,7 +215,10 @@ export async function readSnapZipEntryContent(
 	);
 	try {
 		const zipEntries = await reader.getEntries();
-		const target = zipEntries.find((entry) => entry.filename === entryId.path);
+		assertNotAborted(options?.signal);
+		const target = meta.id.ordinal === undefined
+			? zipEntries.find((entry) => entry.filename === entryId.path)
+			: zipEntries[meta.id.ordinal];
 		if (!target) {
 			throw new SnapZipEntryNotFoundError(entryId);
 		}
@@ -149,18 +226,29 @@ export async function readSnapZipEntryContent(
 			throw new SnapZipEntryIsDirectoryError(entryId);
 		}
 
-		if (options?.asStream) {
-			const blobWriter = new BlobWriter("application/octet-stream");
-			const blob = (await target.getData(
-				blobWriter,
-				DEFAULT_WORKER_OPTIONS,
-			)) as Blob;
-			return typeof blob.stream === "function"
-				? blob.stream()
-				: blob.arrayBuffer();
+		const chunks: Uint8Array<ArrayBuffer>[] = [];
+		let actualBytes = 0;
+		let limitFailure: ArchiveResourceLimitError | null = null;
+		try {
+		await target.getData(new WritableStream<Uint8Array>({
+			write(chunk) {
+				assertNotAborted(options?.signal);
+				actualBytes += chunk.byteLength;
+				if (actualBytes > maxBytes) {
+					limitFailure = new ArchiveResourceLimitError("maxReadBytes");
+					throw limitFailure;
+				}
+				chunks.push(new Uint8Array(chunk));
+			},
+		}), { ...DEFAULT_WORKER_OPTIONS, signal: options?.signal, checkSignature: true });
+		} catch (error) {
+			if (limitFailure) throw limitFailure;
+			assertNotAborted(options?.signal);
+			throw error;
 		}
-
-		return target.arrayBuffer(DEFAULT_WORKER_OPTIONS);
+		assertNotAborted(options?.signal);
+		const blob = new Blob(chunks, { type: "application/octet-stream" });
+		return options?.asStream ? blob.stream() : blob.arrayBuffer();
 	} finally {
 		await safeClose(reader);
 	}
@@ -195,7 +283,7 @@ export function findDuplicateSnapZipPaths(index: SnapZipIndex): string[] {
 }
 
 function getEntryKey(entryId: SnapZipEntryId): string {
-	return `${entryId.sourceId}::${entryId.path}`;
+	return `${entryId.sourceId}::${entryId.path}::${entryId.ordinal ?? "first"}`;
 }
 
 function ensureInternals(index: SnapZipIndex): SnapZipIndexInternals {
@@ -214,7 +302,7 @@ function ensureInternals(index: SnapZipIndex): SnapZipIndexInternals {
 		entryMap.set(getEntryKey(entry.id), entry);
 	}
 
-	internals = { sourceMap, entryMap };
+	internals = { sourceMap, entryMap, limits: DEFAULT_ARCHIVE_RESOURCE_LIMITS };
 	SNAP_INDEX_INTERNALS.set(index, internals);
 	return internals;
 }
@@ -222,12 +310,14 @@ function ensureInternals(index: SnapZipIndex): SnapZipIndexInternals {
 function toSnapEntryMeta(
 	entry: Entry,
 	sourceId: SnapZipSourceId,
+	ordinal: number,
 ): SnapZipEntryMeta {
 	return {
-		id: { sourceId, path: entry.filename },
+		id: { sourceId, path: entry.filename, ordinal },
 		compressedSize: entry.compressedSize,
 		uncompressedSize: entry.uncompressedSize,
 		isDirectory: entry.directory === true,
+		signature: entry.signature,
 	};
 }
 

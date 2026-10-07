@@ -1,8 +1,55 @@
 import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
 import { useArchiveStore } from "../stores/archive";
+import { useWorkspaceStore } from "../stores/workspace";
 
 const routes: RouteRecordRaw[] = [
+	{
+		path: "/account",
+		component: () => import("../views/AccountView.vue"),
+		meta: { title: "Account and AI allowance | Goodbye Chat" },
+	},
+	{
+		path: "/request",
+		component: () => import("../views/RequestView.vue"),
+		meta: { title: "Request your archive | Goodbye Chat" },
+	},
+	{
+		path: "/conversations",
+		component: () => import("../views/ConversationsView.vue"),
+		meta: { title: "Conversations | Goodbye Chat", requiresWorkspace: true },
+	},
+	{
+		path: "/library",
+		component: () => import("../views/LibraryView.vue"),
+		meta: { title: "Your collection | Goodbye Chat", requiresWorkspace: true },
+	},
+	{
+		path: "/observatory",
+		component: () => import("../views/ObservatoryView.vue"),
+		meta: { title: "The observatory | Goodbye Chat", requiresWorkspace: true },
+	},
+	{
+		path: "/year-room",
+		component: () => import("../views/YearRoomView.vue"),
+		meta: {
+			title: "An imagined past self | Goodbye Chat",
+			requiresWorkspace: true,
+		},
+	},
+	{
+		path: "/assistant",
+		component: () => import("../views/AssistantView.vue"),
+		meta: {
+			title: "Explore your archive | Goodbye Chat",
+			requiresWorkspace: true,
+		},
+	},
+	{
+		path: "/export",
+		component: () => import("../views/ExportView.vue"),
+		meta: { title: "Take it with you | Goodbye Chat", requiresWorkspace: true },
+	},
 	{
 		path: "/",
 		name: "home",
@@ -37,7 +84,7 @@ const routes: RouteRecordRaw[] = [
 		path: "/welcome",
 		name: "welcome",
 		component: () => import("../views/WelcomeView.vue"),
-		meta: { title: "Welcome | Goodbye Chat", requiresArchive: true },
+		meta: { title: "Your archive | Goodbye Chat", requiresWorkspace: true },
 	},
 	{ path: "/:pathMatch(.*)*", redirect: "/" },
 ];
@@ -54,6 +101,14 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _from, next) => {
+	if (
+		to.meta.requiresWorkspace &&
+		!useArchiveStore().isImported &&
+		!useWorkspaceStore().dataset
+	) {
+		next({ name: "import", replace: true });
+		return;
+	}
 	if (to.meta.requiresArchive && !useArchiveStore().isImported) {
 		next({ name: "import", replace: true });
 		return;
