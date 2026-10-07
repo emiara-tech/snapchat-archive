@@ -7,7 +7,7 @@ Every task uses an author, an independent reviewer against the original spec, a 
 | Order / task | Required local outcome | Depends on |
 | --- | --- | --- |
 | 1 / CHECKPOINT-01 | Close current AI-04 and SCOPE-02 correction loops, pass integrated build/unit/browser checks and commit an explicit private-safe delivery checkpoint. | Current progress handoffs. |
-| 2 / QUERY-01 | Pure versioned compound query validation/evaluation, timezone years/ranges, Unicode literal search, explicit undated behavior and exact ordered matched/effective IDs. | Current application interfaces; Phase 5. |
+| 2 / [QUERY-01](tasks/query-01.md) | Pure versioned compound query validation/evaluation, timezone years/ranges, Unicode literal search, explicit undated behavior and exact ordered matched/effective IDs. | Current application interfaces; Phase 5. |
 | 3 / OCCURRENCE-01 | Stable historical media occurrences distinct from physical files and copied source provenance. All contextual facets must match the same occurrence. Missing/ambiguous references remain explicit. | Query contract; phases 2/3/5. |
 | 4 / FILTER-01 | One workspace adapter, removable filters/counts, no-op revision handling, validated saved-query compatibility and cross-room exact selection/timezone parity. | Query and occurrence contracts. |
 | 5 / RULES-01 | Previewed participant/conversation exclusions with persistent precedence, shared-media protection, explicit exceptions, effect history and exact undo/redo. | Shared effective selection; Phase 5. |

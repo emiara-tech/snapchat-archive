@@ -48,7 +48,7 @@ Assignments describe current ownership. Check live agents when resuming.
 
 | Task | Status and owner | Required next result |
 | --- | --- | --- |
-| QUERY-01 | Manager resolving the pure query contract; proposed author `specs_workspace`, independent design reviewer `specs_foundation`. | Freeze independently worked same-occurrence, uncertainty, timezone, exact-time, review and supporting-layer cases before implementation. No query implementation has started. Normalization and UI adapters are subsequent tasks. |
+| QUERY-01 | [Contract](tasks/query-01.md) and [literal oracle](tasks/query-01-oracle.md) accepted independently; author `specs_workspace`, code reviewer `specs_foundation`, third fixer `specs_experience`. | Implement the two pure functions test-first, then freeze files for original-spec/standards review and correction. [Design acceptance](reviews/query-01-design.md) closes preflight ambiguities and scoped-proof privacy finding D1; it does not accept code. Normalization and UI adapters are subsequent tasks. |
 
 Current detailed reports, if available: `/tmp/goodbye-review-observatory-next.md`, `/tmp/goodbye-review-account-routing.md`, `/tmp/goodbye-review-export.md`, `/tmp/goodbye-review-year-profile.md`. Finding IDs and requirements are preserved above; losing a report does not imply acceptance.
 

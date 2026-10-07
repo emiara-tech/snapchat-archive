@@ -2,6 +2,8 @@
 
 These specifications turn [the masterplan](../../MASTERPLAN.md) into reviewable product contracts. Each phase retains its full exit gate. A working slice is useful evidence, but does not establish completion of a larger phase or an external integration.
 
+Baseline paragraphs describe each phase's planning starting point. Use [progress](../progress.md) for current completion and ownership, and the [delivery queue](../delivery-queue.md) for bounded task contracts and dependency order.
+
 | Phase | Specification | Owner-visible outcome |
 | --- | --- | --- |
 | 0 | [Delivery foundation](phase-0.md) | Imports recover safely and local work stays private. |

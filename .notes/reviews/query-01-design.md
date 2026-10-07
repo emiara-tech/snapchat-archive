@@ -1,0 +1,9 @@
+# QUERY-01: Independent design review
+
+The manager accepted the [bounded query specification](../tasks/query-01.md) and [independent literal oracle](../tasks/query-01-oracle.md) before implementation. Foundation reviewed the original Phase 2/3/5 requirements and worked memberships; experience separately reviewed module depth, UI separation, privacy and speculative abstractions. This is design acceptance. No implementation was accepted and no tests ran during this review.
+
+The contract resolves the prerequisite ambiguities in occurrence identity/copy proof, entity-specific conjunctions, ambiguous candidates, event-first review inheritance, exclusion authority, supporting layers, scoped metadata, exact time, inventory and legacy compatibility. A true split-fact fixture, signed microsecond boundaries and reused support resources strengthen the original cases. QUERY-01 does not attest byte copies or integrate callers; those remain explicit normalization and adapter gates.
+
+D1 identified unowned diagnostic and candidate-proof references that could bypass exclusions. The corrected contract keeps global diagnostics review-only, intersects owned diagnostic references with selected owner scope, attributes proof per candidate and rebuilds effective associations from surviving targets. Literal denied-source canaries cover the complete effective projection. Safe error paths use fixed schema names rather than supplied private keys or values.
+
+Both reviewers accepted the final contract. Two pure functions own the selection policy with no Vue, browser/provider I/O, persistence, callbacks, classes or rule framework. The code loop must still demonstrate the public behavior test-first, pass independent standards/spec review and close valid findings through a distinct fixer and reviewer recheck. Full masterplan phase and external gates remain open.
