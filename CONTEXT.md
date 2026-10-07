@@ -47,8 +47,14 @@ _Avoid_: Deletion, source edit
 **Curated collection**: The items selected by filters and review decisions for a particular purpose. An export, analysis, or persona uses an explicitly identified collection.
 _Avoid_: Original archive, everything
 
-**Export bundle**: A portable copy of a curated collection, with the selected media and enough context to explain its contents. Its contents reflect a stated selection and export policy.
+**Export bundle**: A portable copy of an explicitly chosen complete dataset or curated collection, including selected media and context. Its stated selection and export policy define which available evidence it preserves; missing source content remains missing.
 _Avoid_: Original archive, cloud backup
+
+**Composed media**: A separate rendered copy of a media asset with its supported overlays combined into its visible appearance. It retains a reference to the preserved original asset and overlay layers.
+_Avoid_: Original image, restored original
+
+**Destination transfer**: An explicitly authorized copy of selected supported media to the owner's chosen external account or service. Its result can be partial and does not by itself preserve the conversations or other context of an export bundle.
+_Avoid_: Complete archive backup, synchronization
 
 ### Interpretation
 

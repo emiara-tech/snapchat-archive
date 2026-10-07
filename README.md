@@ -1,6 +1,6 @@
 # Goodbye Chat
 
-The product direction and delivery phases are in [MASTERPLAN.md](MASTERPLAN.md). Shared terms are defined in [CONTEXT.md](CONTEXT.md), with integration contracts in [auth.md](auth.md) and [docs/visualization.md](docs/visualization.md).
+The product direction and delivery phases are in [MASTERPLAN.md](MASTERPLAN.md). Shared terms are defined in [CONTEXT.md](CONTEXT.md), with integration contracts in [auth.md](auth.md) and [docs/visualization.md](docs/visualization.md). Planned onboarding and return reminders are in [docs/onboarding.md](docs/onboarding.md); complete bundles and Google Photos/Immich transfers are in [docs/export-destinations.md](docs/export-destinations.md).
 
 ## Development configuration
 

@@ -6,10 +6,13 @@
 
 Use [MASTERPLAN.md](MASTERPLAN.md) for product goals and phase completion criteria, [CONTEXT.md](CONTEXT.md) for domain language, [auth.md](auth.md) for authentication and AI access, and [docs/visualization.md](docs/visualization.md) for rendering contracts. Desktop is the design target; mobile work is outside the product scope.
 
+For onboarding and reminders, read [docs/onboarding.md](docs/onboarding.md). For complete/curated bundles, overlays, or external media transfers, read [docs/export-destinations.md](docs/export-destinations.md).
+
 ## Responsibility
 
 - The agent owns engineering delivery, including implementation, debugging, testing, maintenance, and verification of authorized releases.
-- Delivery includes pushing verified work to `dev`, reviewing the `dev` to `main` pull request, handling permitted approvals and merging after checks pass, and verifying the production deployment. A local commit is an intermediate step.
+- Delivery includes pushing verified work to `dev`, opening the `dev` to `main` pull request, obtaining CodeRabbit approval, merging after required checks pass, and verifying the production deployment. A local commit is an intermediate step.
+- Every pull request into `main` requires CodeRabbit's approving review of its latest head commit, including documentation and configuration changes. Address its findings or discuss them with CodeRabbit, push fixes to `dev`, rerun affected checks, and wait for renewed approval. An unavailable, skipped, errored, or earlier review does not authorize merging. Never dismiss its blocking review, invoke approval overrides, bypass branch protection, or push changes directly to `main`.
 - The user sets product direction and evaluates the running app. They do not inspect code, so code review and technical verification are the agent's responsibility.
 - Carry authorized work through to a verified outcome. Resolve routine technical decisions independently; ask when a missing product decision or external access prevents progress.
 - Treat production readiness, privacy, and stability as requirements for every change. Fix known failures in the affected user journey before releasing it.

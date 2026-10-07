@@ -18,7 +18,7 @@ This is a hobby project and an experiment in agentic software development. It sh
 8. **Make delivery agentic.** Agents own implementation, technical review, tests, deployment verification, and maintenance. The user sets direction and judges the running experience.
 9. **Do not subsidize production inference.** Paid requests use the connected user's authorized allowance. A development key cannot become a shared production funding source.
 
-The glossary is in [CONTEXT.md](CONTEXT.md). Authentication and AI access follow [auth.md](auth.md). The rendering and AI scene contracts are in [docs/visualization.md](docs/visualization.md). This plan defines the product and its delivery gates; temporary experiments and current task status belong in working notes or issues.
+The glossary is in [CONTEXT.md](CONTEXT.md). Authentication and AI access follow [auth.md](auth.md). The rendering and AI scene contracts are in [docs/visualization.md](docs/visualization.md). Onboarding and return reminders follow [docs/onboarding.md](docs/onboarding.md); portable bundles and external transfers follow [docs/export-destinations.md](docs/export-destinations.md). This plan defines the product and its delivery gates; temporary experiments and current task status belong in working notes or issues.
 
 ## Authentication, funding, and agent-native operations
 
@@ -53,18 +53,19 @@ We also judge our engineering process as an agentic development experiment. We r
 
 ## The finished journey
 
-1. The owner opens Goodbye Chat and chooses their original export ZIPs.
-2. The app explains what it found, what is incomplete, and which parts of the history can be reconstructed.
-3. A workspace opens with a shared time range and connected views of conversations, media, and observations.
-4. The owner opens a conversation and sees text alongside the images, clips, stickers, and other media the export can associate with it.
-5. Selecting a media item reveals its known conversation context. Selecting a conversation event reveals the asset and any overlay.
-6. The owner filters by year, person, conversation, content, or media type, then keeps, excludes, or postpones review of items.
-7. Those choices feed an explicit curated collection. The owner can export it, inspect its statistics, or choose it as evidence for an AI feature.
-8. The observatory explains patterns and lets the owner explore them spatially: move through a timeline, select a relationship, or inspect a changing vocabulary.
-9. The owner signs in when they want account features and connects their own AI allowance. Approved ChatGPT sign-in and plan use can become another supported path; AI access always has its own permission and usage state.
-10. The owner chooses a year, reviews the available evidence and proposed language profile, and approves the material used for an imagined self.
-11. A year room opens. A stylized, expressive presence speaks in a way informed by that year's writing. Recorded memories, interpretations, and generated conversation remain distinguishable.
-12. The owner can change the evidence, undo curation, stop AI use, clear local working data, and take their collection with them.
+1. A visitor sees a compelling preview of rediscovering their history and can explore a clearly fictional demo immediately. Owners who already have their ZIPs can go straight to import.
+2. A visitor without an archive follows the official Snapchat My Data request flow. Goodbye Chat explains the wait and how Snapchat will notify them, without collecting their Snapchat password or download link.
+3. While waiting, they can explore the demo, choose what they hope to discover, and optionally arrange a consented email reminder. Returning with the files works without an account; account features and reminders have their own permissions.
+4. The owner downloads the export from Snapchat and selects its original ZIPs locally. A spatial import sequence reveals real indexing, linking, and analysis progress as each stage completes.
+5. The app explains coverage and offers a private first reveal: an old photo, a surprising scoped statistic, a recorded participant connection, or an opt-in rediscovery of the owner's own embarrassing words. Every highlight opens its evidence and can be skipped or hidden.
+6. The owner chooses a starting route: rediscover and have fun, understand their history, or curate and take their data elsewhere. All routes enter the same workspace and preserve the current selection.
+7. The owner opens a conversation and sees text alongside the images, clips, stickers, and other media the export can associate with it. Selecting media reveals its known conversation context; selecting an event reveals the asset and any overlay.
+8. The owner filters by year, person, conversation, content, or media type, then keeps, excludes, or postpones review of items. Those decisions feed an explicit curated collection across every room.
+9. The observatory explains patterns and lets the owner move through a timeline, inspect an observed relationship, or explore changing vocabulary.
+10. The owner can download a complete supported archive bundle or a curated bundle, including chosen media with composited overlays and readable conversations. Separate, explicit transfers can send supported selected media to Google Photos or the owner's Immich instance.
+11. The owner signs in when they want account features and connects their own AI allowance. Approved ChatGPT sign-in and plan use can become another supported path; AI access always has its own permission and usage state.
+12. The owner chooses a year, reviews the available evidence and proposed language profile, and approves the material used for an imagined self. A year room opens with a stylized, expressive presence informed by that year's writing.
+13. Recorded memories, interpretations, and generated conversation remain distinguishable. The owner can change the evidence, undo curation, stop AI use, cancel reminders or transfers, clear local working data, and take their collection with them.
 
 The first working slice will be small. The completed journey should feel like one product, with a shared selection and history connecting all of its rooms.
 
@@ -72,7 +73,9 @@ The first working slice will be small. The completed journey should feel like on
 
 | Space | Purpose | Essential connections |
 | --- | --- | --- |
+| Arrival and waiting room | Make the promise tangible, guide the export request, and help the visitor return. | Fictional demo, official request flow, consented reminders, local import. |
 | Import desk | Establish what evidence is available and open a private workspace. | Original archive, coverage, diagnostics. |
+| First reveal | Offer evidence-based personal highlights and a choice of starting route. | Available media, scoped observations, participant context, hide/skip controls. |
 | Conversations | Reconstruct exchanges with their media in context. | Participants, events, asset links, dates. |
 | Library | Browse and curate all available media and other reviewable items. | Conversation context, filters, decisions, export. |
 | Observatory | Explain history through questions, measurements, and spatial scenes. | Shared collection, observations, source events. |
@@ -84,7 +87,7 @@ Navigation should preserve the current year, selected participant, and review co
 
 The repository has browser ZIP import, multipart indexing, parsers for several history files, local media resolution, a basic Memories browser, year/type filters, and foundations for statistics. Build, unit, and browser checks exist. Import failure and retry, replacement of an archive, and route protection have been exercised.
 
-Connected conversation reconstruction, a complete curation/export workflow, a user-facing observatory, genuine ChatGPT authentication, and the imagined-self experience still need delivery. Marketing examples and type definitions do not establish that these features work.
+The guided request-and-return journey, personal first reveal, connected conversation reconstruction, complete bundles and destination integrations, a user-facing observatory, genuine ChatGPT authentication, and the imagined-self experience still need delivery. Marketing examples and type definitions do not establish that these features work.
 
 The existing Vue/Vite application remains the foundation. Hosting is moving to Vercel. A hosting move does not by itself provide authentication, a database, AI entitlement, or a 3D engine.
 
@@ -95,12 +98,13 @@ Each phase produces a working outcome with an exit gate. We use small vertical s
 | Phase | Outcome | Depends on |
 | --- | --- | --- |
 | 0 | A dependable delivery and testing foundation. | Existing app and deployment access. |
+| 0.1 | Compelling onboarding, a truthful wait-and-return path, and the first personal reveal. | Phase 0 for the demo/request path; Phase 1 for account-bound reminders; Phases 2, 3, and 7 for real highlights. |
 | 1 | App identity, user-funded OpenRouter access, and the approved ChatGPT path. | Phase 0, AuthKit access, and provider credentials; ChatGPT also needs OpenAI registration. |
 | 2 | A normalized, traceable dataset with explicit coverage. | Phase 0. |
 | 3 | Evidence-based connections between events, media, and overlays. | Phase 2. |
 | 4 | Reconstructed conversations people can actually browse. | Phases 2–3. |
 | 5 | Unified search, filtering, and reversible curation. | Phases 2–4. |
-| 6 | Reliable exports of curated collections. | Phase 5 and resolved media policy. |
+| 6 | Complete and curated portable bundles, plus supported Google Photos and Immich transfers. | Phase 5, resolved media policy, and each destination's access requirements. |
 | 7 | Understandable, inspectable self-statistics. | Phases 2 and 5. |
 | 8 | A connected Three.js/WebGPU observatory. | Phase 7; build rendering foundations earlier. |
 | 9 | Evidence-backed profiles of the owner's language by year. | Phases 2, 5, and 7; AI enrichment also needs approved access. |
@@ -108,11 +112,14 @@ Each phase produces a working outcome with an exit gate. We use small vertical s
 | 11 | An assistant that can help explore and curate safely. | Stable query/curation contracts and approved AI access. |
 | 12 | A coherent release, operational checks, and user discovery. | Completed core journeys and verified deployment. |
 
-App authentication and the user-funded OpenRouter path are immediate priorities. The optional provider permission to use a ChatGPT plan is tracked independently. Data reconstruction continues while external registrations are pending, because those tasks do not depend on an AI service.
+App authentication, the user-funded OpenRouter path, and the first onboarding slice are immediate priorities. Build the fictional demo and archive request instructions early; add personal highlights as their data contracts become reliable. The optional provider permission to use a ChatGPT plan is tracked independently. Data reconstruction continues while external registrations are pending, because those tasks do not depend on an AI service.
 
 ```mermaid
 flowchart TD
     Foundation[0: Delivery foundation] --> Identity[1: App identity and funded AI access]
+    Foundation --> Arrival[0.1: Demo and archive request]
+    Identity --> Return[Consented reminders and return]
+    Arrival --> Return
     Registration[OpenAI website registration] --> ChatGPT[Approved ChatGPT identity and plan path]
     ChatGPT --> Identity
     Foundation --> Dataset[2: Traceable dataset]
@@ -121,14 +128,21 @@ flowchart TD
     Chats --> Curation[5: Curation]
     Curation --> Export[6: Export]
     Curation --> Stats[7: Self-statistics]
+    Arrival --> Reveal[Personal first reveal]
+    Links --> Reveal
+    Stats --> Reveal
     Stats --> Observatory[8: 3D observatory]
     Stats --> Profile[9: Year profile]
     Identity --> YearRoom[10: Imagined self]
     Profile --> YearRoom
-    Observatory --> YearRoom
+    Foundation --> Rendering[Shared rendering foundations]
+    Rendering --> Observatory
+    Rendering --> YearRoom
     Curation --> Assistant[11: Exploration assistant]
     Identity --> Assistant
     Export --> Release[12: Complete release]
+    Reveal --> Release
+    Return --> Release
     Observatory --> Release
     YearRoom --> Release
     Assistant --> Release
@@ -149,9 +163,33 @@ Work:
 - Show progress that corresponds to actual work. Keep the interface responsive while indexing and analysing.
 - Verify document routes and hashed assets on the deployed host. Detect stale HTML referencing missing JavaScript.
 - Establish preview and production checks, a known rollback path, and minimal operational evidence that contains no archive content.
+- Enforce the release review rule in [agents.md](agents.md) through branch protection and a check for CodeRabbit's approval of the current pull request commit.
 - Exercise desktop navigation, browser reloads, interrupted operations, error recovery, and relevant browser capability failures.
 
 **Exit gate:** a clean checkout can pass the required checks; a deployed release opens directly on its important routes; a valid synthetic multipart import works; a damaged import offers a working retry; replacing or clearing an archive leaves no previous data visible. The agent can identify the deployed revision and demonstrate its affected journey.
+
+## Phase 0.1. Arrival, waiting, and the first reveal
+
+**Owner-visible outcome:** the visitor understands why their archive is worth requesting, enjoys a useful preview while waiting, and returns to an import that reveals something personal before asking them to navigate a large dataset.
+
+This work spans the later data phases. Its detailed states, notification boundaries, and verification contract are in [docs/onboarding.md](docs/onboarding.md). The first slice needs no archive, AI request, or destination account.
+
+Work:
+
+- Create a desktop arrival scene with a short, clearly fictional guided demo of connected conversations, old photos, and understandable statistics. Allow immediate import at every entry point.
+- Link to Snapchat's official My Data request page and explain choosing the desired date range and media options. State the current documented delivery expectation without guaranteeing a deadline.
+- Treat departure to Snapchat and return to Goodbye Chat as explicit states. A visitor can mark the request sent, explore the demo, and return when their download arrives.
+- Offer optional reminders with verified recipient ownership and specific consent. Durable waiting must survive process restarts, stop on cancellation/import/account deletion, and bound retries and total sends.
+- A timer sends a truthful reminder to check Snapchat, not a claim that the archive is ready. Add readiness callbacks only after establishing a supported provider contract and authenticating its events.
+- Keep reminder records separate from the archive. Emails and return URLs contain no photos, names of participants, message excerpts, Snapchat download tokens, or private highlights.
+- Use local workers and measured stages for indexing, inventory, media links, and statistics. Let a 3D scene build as evidence arrives; support cancellation, retry, reduced motion, and immediate access when analysis is complete.
+- Choose highlights from available, traceable evidence. Start with local counts and retrieval; remote AI is an optional, separately consented enrichment funded by the user.
+- Make embarrassing-message rediscovery opt-in and limited to verified owner-authored text. Offer skip/hide controls and avoid judging a participant's personality or a relationship's quality.
+- Offer rediscovery, self-analysis, and curation/export routes that preserve the same collection and allow switching without another import.
+
+**Early exit gate:** a new visitor can explore a labelled demo, reach the genuine Snapchat request page, understand the waiting state, and return to import. A synthetic reminder flow survives restart and repeated delivery attempts, sends within its consented limit, and stops after cancellation or import.
+
+**Personal reveal exit gate:** a synthetic archive produces independently verified highlights with working evidence links; sparse or missing data produces an honest alternative; skip/hide choices hold across routes. Browser checks show real progress and cancellation, local-only analysis, and no archive content in notification traffic. Waiting and arrival alone do not complete this phase.
 
 ## Phase 1. Account identity and user-funded AI
 
@@ -262,22 +300,31 @@ Work:
 
 ## Phase 6. Export something worth keeping
 
-**Owner-visible outcome:** a curated collection becomes a portable, verifiable bundle suitable for a photo library, personal storage, or later review.
+**Owner-visible outcome:** the owner can download their supported archive or a curated collection with media and overlays together, and deliberately transfer supported media to Google Photos or their own Immich instance.
+
+Bundle policy and destination-specific capability gates follow [docs/export-destinations.md](docs/export-destinations.md). A media destination cannot replace a complete bundle of conversations, evidence, and original files.
 
 Work:
 
 - Build an export preview with date range, item counts, estimated size, missing assets, unresolved links, and inclusion policy.
-- Offer original assets and clearly identified rendered/composed variants. Preserve the original archive separately.
-- Include a manifest describing selected items, timestamps, conversation context, review policy, and missing content.
+- Offer distinct complete supported archive and curated collection modes. Preview the scope explicitly; a complete mode requires a deliberate choice if it would include previously excluded items.
+- Offer preserved original assets and clearly identified composed image/video variants with supported overlays, captions, drawings, and stickers. Verify alignment, orientation, alpha, dimensions, and supported video timing; report unsupported cases rather than dropping a layer.
+- Include a manifest describing selected items, timestamps, conversation context, review policy, missing content, checksums, and the relationship between originals and derivatives. Retain the original archive as a separate unchanged source.
 - Use collision-safe, portable filenames and safe output paths. Preserve Unicode meaning without creating unsafe paths.
 - Define metadata policy explicitly. Original-file exports may retain embedded GPS and other metadata; privacy-preserving variants require deliberate transformation and disclosure.
 - Export text conversations in a readable format with their selected local media references, alongside machine-readable context.
 - Stream or split large bundles where browser capabilities allow. Support progress, cancellation, and bounded memory use.
 - Explain unsupported transformations and missing items before completion.
 - Verify original-file bytes with checksums and compare bundle contents with the approved selection.
-- Provide practical import guidance for common destinations. Direct transfers to external services are a separate consent and integration feature.
+- Implement Google Photos as an explicitly scoped export of supported media, with current OAuth permission and app-created-library restrictions accounted for. Do not promise unrestricted browsing or synchronization of the owner's existing library.
+- Implement Immich transfer to the owner's verified destination with least-privilege access and an explicit connection path for privately hosted instances. A cloud function cannot assume access to a home network; use the supported local connector path where necessary.
+- Show the account/instance, collection, media variants, metadata, estimated transfer size, and unsupported items before any external transfer. Authentication and curation do not grant transfer permission.
+- Persist a minimal private transfer ledger to resume safely, reconcile actual destination results, avoid duplicate uploads, and distinguish success, missing items, cancellation, and partial failure. Recheck destination access before retrying.
+- Verify destination results using synthetic media and scoped test accounts. Revoke connections cleanly and keep credentials and private destination addresses out of public logs.
 
-**Exit gate:** a synthetic curated collection round-trips into a bundle with the expected assets and context; exclusions stay excluded; filenames do not collide; originals retain their bytes; composed variants are identified; cancelling does not leave a falsely completed export. A realistic private export is verified locally without publishing its content.
+**Bundle exit gate:** complete and curated synthetic collections round-trip into bundles with expected assets and context; exclusions match the approved policy; filenames do not collide; originals retain their bytes; composed variants retain supported overlays; cancelling does not leave a falsely completed export. A realistic private export is verified locally without publishing its content.
+
+**Destination exit gate:** an explicitly approved synthetic selection arrives in the correct Google Photos account and an owner-controlled Immich instance with supported dates and variants. Repeating an interrupted transfer does not duplicate confirmed items; expired access, unsupported media, unreachable instances, cancellation, and partial failure produce accurate results. Neither transfer success nor a photo count proves that the complete archive was preserved.
 
 ## Phase 7. Statistics people can understand
 
@@ -413,6 +460,7 @@ Work:
 Work:
 
 - Align onboarding, terminology, room transitions, empty states, selection behavior, and explanations across the product.
+- Verify the request-to-return journey across a real wait, including reminder cancellation and an eventual local import. Inspect any disclosed retention measurements without collecting private archive content.
 - Verify production authentication, local data boundaries, archive lifecycle, exports, observations, 3D recovery, and AI usage end to end.
 - Test representative desktop viewports and browser capabilities with documented benchmark environments.
 - Review dependencies, update behavior, error surfaces, rate limits, account isolation, and rollback procedure.
@@ -432,11 +480,13 @@ Outreach is future work. Publishing posts, contacting people, or collecting real
 
 | Boundary | Responsibilities | Contract |
 | --- | --- | --- |
+| Onboarding and reminders | Guide requests, retain consented waiting state, send bounded reminders, and stop on return/cancellation. | Minimal account/status data; authenticated events; no guessed readiness or archive material. |
 | Archive reader | Index ZIP entries and provide bounded access to local records/assets. | No remote archive fetches or implicit uploads. |
 | Normalization and linking | Construct the dataset, sources, coverage, and relationship evidence. | Deterministic, inspectable results; source records preserved. |
 | Query and review | Evaluate filters and apply reversible decisions. | One effective collection shared across features. |
 | Analysis | Compute observations and retrieve their evidence. | Defined units, coverage, reproducible values. |
-| Export | Create portable copies of the approved collection. | Explicit policy, accurate manifest, byte checks where promised. |
+| Export | Create portable copies of the approved collection. | Explicit complete/curated policy, accurate manifest, byte and overlay checks where promised. |
+| Destination connectors | Transfer selected media to the authorized account or instance and reconcile results. | Separate transfer consent, scoped credentials, private resumable ledger, explicit capability limits. |
 | Visualization | Render trusted observations and validated scene descriptions. | Bounded resources, meaningful encodings, recoverable rendering. |
 | Year profile and retrieval | Build owner-authored, year-scoped evidence for an imagined self. | Exclusion compliance, provenance, uncertainty. |
 | Authentication backend | Verify identity, manage transactions and sessions, expose capabilities. | Secure cookies, durable session state, account isolation. |
@@ -453,6 +503,7 @@ Provider implementations sit behind the documented contracts. Choose concrete li
 - Preserve the original archive. Review decisions, corrected links, profiles, and generated conversations are separate private derivatives.
 - Keep archives, thumbnails, usernames, messages, filenames, locations, excerpts, profiles, and transcripts out of public commits and routine logs.
 - Treat authentication, AI allowance, external processing, and persistence as distinct permissions.
+- Treat notification and destination-transfer consent independently. Waiting jobs and emails hold no archive content; importing an archive stops its pending onboarding reminders.
 - Show the owner what an AI operation uses and allow them to reduce its context. Ordinary browsing never starts one.
 - Apply exclusions to search, observations, retrieval, prompts, and exports according to the chosen collection.
 - Protect other participants' content. The imagined self starts with the archive owner's authored messages.
@@ -465,6 +516,8 @@ Provider implementations sit behind the documented contracts. Choose concrete li
 
 | Area | Representative cases | Required evidence |
 | --- | --- | --- |
+| Onboarding | No archive, existing archive, return after delay, sparse highlights, skip/hide, cancel import. | Genuine request link, labelled demo, truthful progress, source-backed reveal, all three routes reachable. |
+| Reminders | Unverified address, replay, restart, duplicate wake/send, unsubscribe, import, deletion. | Consented bounded delivery; no false readiness claim or post-cancellation send; no archive content in jobs/emails. |
 | Import | Multipart, malformed ZIP/JSON, duplicates, missing sections, excessive resources. | Correct inventory or recoverable failure, responsive UI, no stale session. |
 | Identity | Success, decline, invalid claims, expired/replayed callback, reload, logout, isolated users. | Real sign-in plus meaningful synthetic security checks; ChatGPT approval tested separately. |
 | Funding | Missing key, zero/insufficient allowance, revoked connection, wrong account, concurrent requests. | Only the initiating user's authorized key is used; no owner-funded fallback or undisclosed charge. |
@@ -472,6 +525,7 @@ Provider implementations sit behind the documented contracts. Choose concrete li
 | Conversations | Mixed event types, groups, tied times, incomplete history, long threads. | Stable reconstruction and correct navigation to source events. |
 | Curation | Compound filters, excluded person in group, batch changes, undo, restore. | Consistent effective collection across all consumers. |
 | Export | Original/composed media, missing assets, unsafe/colliding names, cancellation, large output. | Selection/manifest agreement and promised byte preservation. |
+| Destinations | Wrong account, private instance, expired scope, unsupported format, timeout, repeated upload. | Explicit selection reaches the verified destination; truthful partial results; no duplicate confirmed transfers or undisclosed uploads. |
 | Statistics | Sparse years, different period lengths, own/received text, timezone boundaries. | Independent expected values, clear denominator and coverage. |
 | 3D | Large history, selection accuracy, low capability, device loss, motion settings. | Measured desktop budgets, recovery, meaningful source drill-down. |
 | Year profiles | Ambiguous authorship, excluded text, mixed languages, copied content, sparse evidence. | Reproducible features and source-backed interpretations. |
@@ -498,17 +552,18 @@ The user should be able to judge progress by using the app and reading a short r
 ## First delivery slices
 
 1. **Deliver account and funding boundaries.** Prepare AuthKit and the per-user OpenRouter connection, verify their supported configuration and key allowance, and track the separate ChatGPT registration gate. No misleading sign-in or owner-funded fallback.
-2. **Connect one complete synthetic conversation.** Text, an attached image, an overlay, a clip, and an unresolved asset all appear with correct source references.
-3. **Verify real reconstruction privately.** Inspect supported cases in the available test archive without publishing content or silently generalizing unsupported formats.
-4. **Curate and export one year.** A compound filter, an exclusion, undo, and an export preview agree on the selected collection; the output is verified locally.
-5. **Answer one self-analysis question beautifully.** A deterministic observation, plain explanation, meaningful scene, and source drill-down work together.
-6. **Build one evaluated year profile.** Only selected owner-authored evidence contributes; the owner can inspect and change it.
-7. **Talk with one imagined self.** Start with an evaluated, grounded text conversation and a procedural 3D presence, then develop the full year-room art direction.
+2. **Make arrival and return work.** Offer a compelling fictional demo, genuine Snapchat export instructions, immediate import, and an optional verified, cancellable reminder. The wait must not leave a visitor with nothing to try.
+3. **Connect one complete synthetic conversation.** Text, an attached image, an overlay, a clip, and an unresolved asset all appear with correct source references. Turn supported evidence into the first private reveal.
+4. **Verify real reconstruction privately.** Inspect supported cases in the available test archive without publishing content or silently generalizing unsupported formats.
+5. **Curate and export one year.** A compound filter, an exclusion, undo, and an export preview agree on the selected collection; originals and composed media are verified locally. Extend to a complete bundle and then separately verified destination transfers.
+6. **Answer one self-analysis question beautifully.** A deterministic observation, plain explanation, meaningful scene, and source drill-down work together.
+7. **Build one evaluated year profile.** Only selected owner-authored evidence contributes; the owner can inspect and change it.
+8. **Talk with one imagined self.** Start with an evaluated, grounded text conversation and a procedural 3D presence, then develop the full year-room art direction.
 
 ## The end goal
 
-The project is complete when an owner can privately reconstruct the supported parts of their archive, see media in conversation context, curate and export a useful collection, understand meaningful observations about their history, sign in through a genuine supported ChatGPT integration, and talk with an explicitly imagined self for a selected year inside a beautiful desktop 3D experience.
+The project is complete when a new visitor can request their Snapchat archive, enjoy a meaningful preview while waiting, and return for a personal reveal. An owner can privately reconstruct the supported parts of their archive, see media in conversation context, download complete or curated bundles with supported media overlays combined, transfer selected media to Google Photos and their own Immich instance, understand meaningful observations about their history, sign in through a genuine supported ChatGPT integration, and talk with an explicitly imagined self for a selected year inside a beautiful desktop 3D experience.
 
 Completion also requires the agent to demonstrate the working journey on its real deployment, report honest data and provider limitations, and operate its authorized delivery path without depending on the user to read the code.
 
-Possible later extensions include additional export formats, direct destination integrations, comparisons across several archives, optional cloud persistence, richer avatars, and separately authorized voice experiences. They can follow the completed core journey without weakening its privacy and evidence contracts.
+Possible later extensions include more destination integrations, comparisons across several archives, optional cloud persistence, richer avatars, and separately authorized voice experiences. They can follow the completed core journey without weakening its privacy and evidence contracts.

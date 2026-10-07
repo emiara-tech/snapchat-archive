@@ -59,16 +59,17 @@ test("a failed import can recover, and removing files clears the import selectio
 
 test("multipart archives display local images, filter by year, and reset the session", async ({ page }) => {
 	const pageErrors: string[] = [];
-	const requestHosts = new Set<string>();
+	const requests: { url: string; method: string; archiveSelected: boolean }[] = [];
+	let archiveSelected = false;
 	page.on("pageerror", (error) => pageErrors.push(error.message));
-	await page.goto("/import");
-	await page.waitForLoadState("networkidle");
 	page.on("request", (request) => {
 		const url = new URL(request.url());
 		if (url.protocol === "http:" || url.protocol === "https:") {
-			requestHosts.add(url.hostname);
+			requests.push({ url: url.href, method: request.method(), archiveSelected });
 		}
 	});
+	await page.goto("/import");
+	await page.waitForLoadState("networkidle");
 	const jpeg = await page.evaluate(() => {
 		const canvas = document.createElement("canvas");
 		canvas.width = 8;
@@ -100,6 +101,7 @@ test("multipart archives display local images, filter by year, and reset the ses
 		"memories/2026-01-01_recent-main.jpg": image,
 		"memories/2025-01-01_older-main.jpg": image,
 	});
+	archiveSelected = true;
 	await page.locator('input[type="file"]').setInputFiles([
 		{ name: "metadata.zip", mimeType: "application/zip", buffer: metadata },
 		{ name: "media.zip", mimeType: "application/zip", buffer: media },
@@ -127,12 +129,22 @@ test("multipart archives display local images, filter by year, and reset the ses
 	await expect(page.locator(".photos-grid > *")).toHaveCount(0);
 	await page.getByRole("button", { name: "Start over", exact: true }).click();
 	await expect(page).toHaveURL(/\/$/);
+	archiveSelected = false;
 	await page.goto("/photos");
 	await expect(page).toHaveURL(/\/import$/);
 	await expect(page.locator(".photos-grid")).toHaveCount(0);
 	await page.waitForLoadState("networkidle");
 	expect(pageErrors).toEqual([]);
-	expect([...requestHosts]).toEqual([new URL(page.url()).hostname]);
+	const origin = new URL(page.url()).origin;
+	const unexpectedRequests = requests.filter((request) => {
+		const url = new URL(request.url);
+		if (url.origin === origin) return request.archiveSelected && request.method !== "GET";
+		// Cloudflare may inject this public script while no archive is selected.
+		return request.archiveSelected || request.method !== "GET"
+			|| url.hostname !== "static.cloudflareinsights.com"
+			|| !/^\/beacon\.min\.js(?:\/v[\da-z]+)?$/.test(url.pathname);
+	});
+	expect(unexpectedRequests).toEqual([]);
 });
 
 test("direct archive pages require an import, and mobile navigation works", async ({ page }) => {
