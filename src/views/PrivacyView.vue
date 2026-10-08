@@ -3,7 +3,7 @@
 		<div class="container privacy-page">
 			<header>
 				<span class="eyebrow">Your archive, on your device</span>
-				<h1>Your history<br />stays with you.</h1>
+				<h1>Your archive stays in your browser.</h1>
 				<p>
 					Local import, conversations, curation, statistics, and bundle
 					downloads work without uploading your archive or creating an account.
@@ -77,6 +77,14 @@
 			</section>
 			<section>
 				<h2>Diagnostics and third parties</h2>
+				<p>
+					When enabled, cookie-free Vercel Web Analytics measures clean public
+					pages before an archive is opened. Archive workspace and account pages,
+					query parameters, fragments, and visits with a referrer are excluded.
+					Vercel receives public page views and browsing metadata such as browser,
+					device, and approximate location. See
+					<a href="https://vercel.com/docs/analytics/privacy-policy">Vercel's analytics privacy policy</a>.
+				</p>
 				<p>
 					The app does not send archive text, media, private filenames,
 					vocabulary, or locations to analytics or error reporting. Public fonts

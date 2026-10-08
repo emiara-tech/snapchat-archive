@@ -165,7 +165,7 @@ Work:
 - Show progress that corresponds to actual work. Keep the interface responsive while indexing and analysing.
 - Verify document routes and hashed assets on the deployed host. Detect stale HTML referencing missing JavaScript.
 - Establish preview and production checks, a known rollback path, and minimal operational evidence that contains no archive content.
-- Enforce the release review rule in [agents.md](agents.md) through branch protection and a check for CodeRabbit's approval of the current pull request commit.
+- Follow the release review rule in [agents.md](agents.md) and satisfy the required branch protections before merging.
 - Exercise desktop navigation, browser reloads, interrupted operations, error recovery, and relevant browser capability failures.
 
 **Exit gate:** a clean checkout can pass the required checks; a deployed release opens directly on its important routes; a valid synthetic multipart import works; a damaged import offers a working retry; replacing or clearing an archive leaves no previous data visible. The agent can identify the deployed revision and demonstrate its affected journey.

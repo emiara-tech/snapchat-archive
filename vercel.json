@@ -9,5 +9,8 @@
     { "source": "/api/inference/status", "destination": "/api/service?route=/api/inference/status" },
     { "source": "/api/inference/cancel", "destination": "/api/service?route=/api/inference/cancel" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [{ "key": "Referrer-Policy", "value": "no-referrer" }] }
   ]
 }

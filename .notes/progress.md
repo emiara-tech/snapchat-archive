@@ -97,3 +97,11 @@ No entire masterplan phase is claimed complete from the slices above.
 Feature work is not released. TDD documentation is committed in `9cd6e9b`; specs, resume tracking, backlog and modularity guidance are committed in `1248f62`. CHECKPOINT-01 records the accepted integrated feature checkpoint; use git history for its exact revision and inspect the current diff for later work.
 
 A read-only audit found newer upstream changes to review policy and analytics. Preserve them during integration, follow current branch requirements, and prevent analytics from receiving private workspace/auth callback data. After feature freeze use an isolated integration checkout; do not move/reset another checked-out branch. Re-fetch actual heads and requirements. `/tmp/goodbye-release-compatibility.md` is a snapshot report, not permanent configuration or authority.
+
+## Usable website release assessment
+
+The release integrates the accepted local archive workspace with upstream public analytics and the optional CodeRabbit policy. The manager and a separate Extra High reviewer found no outstanding blocker in import, media playback, curation, bundle export, import recovery, or unavailable-account handling. Analytics admit only clean public pages before archive activation; account/workspace routes, URL parameters/fragments, referrer visits, and custom events are excluded. Browser and deployment responses suppress referrers. The minimum Node runtime is 22.13, verified with a real SQLite open/write/close.
+
+Integrated verification passed the production build, 283 regular unit tests, all 36 browser tests, and the strengthened public/private analytics browser checks. Two optional checks were skipped in the clean checkout: private fixture inventory and the opt-in large export. A separate actual private three-part archive imported successfully in the integrated production build, decoded an image and played a video, with no page errors or external requests. No private archive data was committed or uploaded.
+
+Local usability is accepted. The release still requires a deployed preview, current GitHub merge requirements, and live production verification. Full masterplan completion, paid AI activation, shared production account provisioning, and the cinematic visual revamp remain open.
