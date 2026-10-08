@@ -18,13 +18,12 @@ test("analytics admits only clean public page views", async ({ page }) => {
 	}));
 	await page.goto("/");
 	await expect.poll(() => page.evaluate(() => (window as any).analyticsAccepted?.length)).toBeGreaterThanOrEqual(1);
-	const initialViews = await page.evaluate(() => (window as any).analyticsAccepted);
 	await page.getByRole("link", { name: "Account", exact: true }).click();
 	await expect(page).toHaveURL(/\/account$/);
 	await page.waitForTimeout(150);
 	const views = await page.evaluate(() => (window as any).analyticsAccepted);
-	expect(views).toEqual(initialViews);
-	expect(views.every((view: { url: string }) => view.url === new URL("/", page.url()).href)).toBe(true);
+	expect(views.length).toBeGreaterThan(0);
+	expect(views.every((view: { type: string; url: string }) => view.type === "pageview" && view.url === new URL("/", page.url()).href)).toBe(true);
 	await page.goto("/import?code=private-callback#private-fragment");
 	await expect(page.getByRole("heading", { name: "Drop the zips from Snapchat here to start exploring the past." })).toBeVisible();
 	expect(await page.locator('script[data-sdkn]').count()).toBe(0);

@@ -14,7 +14,7 @@ For onboarding and reminders, read [docs/onboarding.md](docs/onboarding.md). For
 
 - The agent owns engineering delivery, including implementation, debugging, testing, maintenance, and verification of authorized releases.
 - The user authorizes pushing verified work to `dev`, opening the `dev` to `main` pull request, merging after required checks pass, and verifying the production deployment without asking for confirmation again. A local commit is an intermediate step.
-- Before merging into `main`, review the current diff, address valid outstanding findings, and pass the applicable build, tests, and required GitHub checks. Record verification in the pull request. CodeRabbit reviews are optional.
+- Before merging into `main`, review the current diff, address valid outstanding findings, and pass the applicable build, tests, and required GitHub checks. Record verification in the pull request. Independent GitHub approvals and CodeRabbit reviews are optional; the agent remains responsible for technical review and verification.
 - The user sets product direction and evaluates the running app. They do not inspect code, so code review and technical verification are the agent's responsibility.
 - Carry authorized work through to a verified outcome. Resolve routine technical decisions independently; ask when a missing product decision or external access prevents progress.
 - Treat production readiness, privacy, and stability as requirements for every change. Fix known failures in the affected user journey before releasing it.
