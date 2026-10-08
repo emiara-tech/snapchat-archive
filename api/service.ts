@@ -1,10 +1,10 @@
-import { handleNodeAccountRequest } from "../server/nodeAccountAdapter";
+import { handleNodeAccountRequest } from "../server/nodeAccountAdapter.js";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { createAccountService } from "../server/accountService";
-import { redisStore } from "../server/store";
-import { workosIdentity } from "../server/identity";
-import { localStore } from "../server/localStore";
-import type { DurableStore } from "../server/store";
+import { createAccountService } from "../server/accountService.js";
+import { redisStore } from "../server/store.js";
+import { workosIdentity } from "../server/identity.js";
+import { localStore } from "../server/localStore.js";
+import type { DurableStore } from "../server/store.js";
 interface LocalAccountResources {
 	current: { path: string; store: ReturnType<typeof localStore> } | null;
 	servers: Set<symbol>;

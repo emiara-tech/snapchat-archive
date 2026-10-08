@@ -1,4 +1,4 @@
-import { InferenceError } from "./inference";
+import { InferenceError } from "./inference.js";
 
 // Bounds decoded JSON before allocation/parsing; private upstream errors are never surfaced.
 export async function readBoundedJson(source: Request | Response, maxBytes: number): Promise<unknown> {

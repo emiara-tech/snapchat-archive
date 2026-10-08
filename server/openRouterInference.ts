@@ -1,5 +1,5 @@
-import { readBoundedJson } from "./boundedJson";
-import { InferenceError, type InferenceProvider, type InferenceQuote, type InferenceResult } from "./inference";
+import { readBoundedJson } from "./boundedJson.js";
+import { InferenceError, type InferenceProvider, type InferenceQuote, type InferenceResult } from "./inference.js";
 
 function object(value: unknown): value is Record<string, unknown> { return Boolean(value) && typeof value === "object" && !Array.isArray(value); }
 function deny(): never { throw new InferenceError(503, "provider_capability_unavailable"); }

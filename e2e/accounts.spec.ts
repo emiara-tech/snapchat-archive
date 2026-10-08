@@ -46,3 +46,22 @@ test("successful logout clears verified state even when the follow-up status che
 	await expect(page.getByRole("button", { name: "Sign out", exact: true })).toHaveCount(0);
 	await expect(page.getByText(/Finite key allowance verified/)).toHaveCount(0);
 });
+
+test("the real account endpoint reports its availability without breaking local access", async ({ page, request }) => {
+	const response = await request.get("/api/session");
+	expect(response.status()).toBe(200);
+	expect(response.headers()["content-type"]).toContain("application/json");
+	expect(response.headers()["cache-control"]).toContain("no-store");
+	expect(response.headers()["referrer-policy"]).toBe("no-referrer");
+	const status = await response.json();
+	expect(typeof status.available).toBe("boolean");
+	await page.goto("/account");
+	await expect(page.getByRole("link", { name: /Open an archive without an account/ })).toBeVisible();
+	if (!status.available) {
+		expect(status.account).toBeNull();
+		await expect(page.getByText("Account connections aren't available in this environment yet.")).toBeVisible();
+		const login = await request.get("/auth/login", { maxRedirects: 0 });
+		expect(login.status()).toBe(503);
+		expect((await login.json()).error).toBe("account_not_configured");
+	}
+});

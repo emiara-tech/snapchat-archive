@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { InferenceError, MAX_INFERENCE_BODY_BYTES } from "./inference";
+import { InferenceError, MAX_INFERENCE_BODY_BYTES } from "./inference.js";
 
 function requestBody(request: IncomingMessage): Promise<Uint8Array> {
 	const length = request.headers["content-length"];

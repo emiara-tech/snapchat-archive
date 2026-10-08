@@ -3,7 +3,7 @@ import { importSyntheticArchive } from "./fixtures/archive";
 
 // Observe the SDK boundary without sending test data to Vercel.
 test("analytics admits only clean public page views", async ({ page }) => {
-	await page.route("**/*insights/script*.js", route => route.fulfill({
+	await page.route(/\/(?:_vercel\/insights|[a-f0-9]{16})\/script[^/]*\.js(?:\?.*)?$/, route => route.fulfill({
 		contentType: "application/javascript",
 		body: `window.analyticsAccepted = [];
 		let filter;
@@ -27,7 +27,7 @@ test("analytics admits only clean public page views", async ({ page }) => {
 	expect(views.every((view: { url: string }) => view.url === new URL("/", page.url()).href)).toBe(true);
 	await page.goto("/import?code=private-callback#private-fragment");
 	await expect(page.getByRole("heading", { name: "Drop the zips from Snapchat here to start exploring the past." })).toBeVisible();
-	expect(await page.locator('script[src*="insights/script"]').count()).toBe(0);
+	expect(await page.locator('script[data-sdkn]').count()).toBe(0);
 	await importSyntheticArchive(page);
 	const importedViews = await page.evaluate(() => (window as any).analyticsAccepted);
 	await page.getByRole("navigation", { name: "Footer", exact: true }).getByRole("link", { name: "Privacy", exact: true }).click();
@@ -40,9 +40,9 @@ test("direct private pages and referrer visits never load analytics", async ({ p
 	for (const path of ["/account", "/import?code=private-callback", "/import#private-fragment"]) {
 		await page.goto(path);
 		await expect(page.locator(".layout")).toBeVisible();
-		expect(await page.locator('script[src*="insights/script"]').count()).toBe(0);
+		expect(await page.locator('script[data-sdkn]').count()).toBe(0);
 	}
 	await page.goto("/", { referer: "https://example.test/account?code=private-referrer" });
 	await expect(page.locator(".layout")).toBeVisible();
-	expect(await page.locator('script[src*="insights/script"]').count()).toBe(0);
+	expect(await page.locator('script[data-sdkn]').count()).toBe(0);
 });

@@ -8,13 +8,13 @@ import {
 	returnPath,
 	sameSecret,
 	token,
-} from "./security";
-import type { KeyAllowance } from "./security";
+} from "./security.js";
+import type { KeyAllowance } from "./security.js";
 import type { DurableStore } from "./store";
 import type { IdentityProvider, VerifiedAccount } from "./identity";
-import { createInferenceService, InferenceError, MAX_INFERENCE_BODY_BYTES, type FundingAuthority, type InferenceProvider } from "./inference";
-import { openRouterInferenceProvider } from "./openRouterInference";
-import { readBoundedJson } from "./boundedJson";
+import { createInferenceService, InferenceError, MAX_INFERENCE_BODY_BYTES, type FundingAuthority, type InferenceProvider } from "./inference.js";
+import { openRouterInferenceProvider } from "./openRouterInference.js";
+import { readBoundedJson } from "./boundedJson.js";
 export interface AccountServiceOptions {
 	origin: string;
 	password: string;

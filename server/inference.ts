@@ -1,6 +1,6 @@
 import type { InferenceInput, InferencePurpose, InferenceRequest, InferenceOutput, InferencePreview, InferenceSubmission, InferenceJobSummary, JobState } from "../src/types/inference";
 export type { InferenceInput, InferencePurpose, InferenceRequest, InferenceOutput, InferencePreview, InferenceSubmission, InferenceJobSummary, JobState } from "../src/types/inference";
-import { digest, sameSecret, token } from "./security";
+import { digest, sameSecret, token } from "./security.js";
 import type { DurableStore } from "./store";
 
 const NANO_USD = 1_000_000_000;
