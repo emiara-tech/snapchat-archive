@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useArchiveStore } from "../stores/archive";
 
 const router = useRouter();
 const archiveStore = useArchiveStore();
+let active = true;
+onBeforeUnmount(() => { active = false; if (archiveStore.isProcessing) archiveStore.cancelProcessing(); });
 
 function chooseDifferentFiles() {
 	archiveStore.resetArchive();
@@ -21,10 +23,11 @@ async function runProcessingSequence() {
 
 	try {
 		await archiveStore.prepareArchive(archiveStore.selectedFiles);
+		if (!active) return;
 		archiveStore.completeProcessing();
 		router.push("/welcome");
-	} catch (error) {
-		console.error("Failed to process archive", error);
+	} catch {
+		if (!active || !archiveStore.importError) return;
 		archiveStore.updateProgress(0, "Failed to process archive");
 	}
 }
@@ -52,13 +55,13 @@ onMounted(() => {
 				class="processing-content card"
 				role="alert"
 			>
-				<h1>Couldn't open your archive.</h1>
+				<h1>{{ archiveStore.importError.title }}</h1>
 				<p class="processing-subtitle">
-					Choose the original ZIP files from your Snapchat download and try
-					again. If the download is incomplete, download it again first.
+					{{ archiveStore.importError.description }}
 				</p>
+				<p>{{ archiveStore.importError.preservationNotice }}</p>
 				<button class="btn btn-primary" @click="chooseDifferentFiles">
-					Choose different ZIPs
+					{{ archiveStore.importError.actionLabel }}
 				</button>
 			</div>
 			<div v-else class="processing-content card">
@@ -142,6 +145,7 @@ onMounted(() => {
 						<span>Open your archive</span>
 					</div>
 				</div>
+				<button class="btn btn-secondary" @click="chooseDifferentFiles">Cancel import</button>
 			</div>
 		</div>
 	</div>

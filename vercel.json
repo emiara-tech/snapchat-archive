@@ -1,6 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/auth/:path*", "destination": "/api/service?route=/auth/:path*" },
+    { "source": "/connections/:path*", "destination": "/api/service?route=/connections/:path*" },
+    { "source": "/api/session", "destination": "/api/service?route=/api/session" },
+    { "source": "/api/inference/preview", "destination": "/api/service?route=/api/inference/preview" },
+    { "source": "/api/inference/submit", "destination": "/api/service?route=/api/inference/submit" },
+    { "source": "/api/inference/status", "destination": "/api/service?route=/api/inference/status" },
+    { "source": "/api/inference/cancel", "destination": "/api/service?route=/api/inference/cancel" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [{ "key": "Referrer-Policy", "value": "no-referrer" }] }
   ]
 }

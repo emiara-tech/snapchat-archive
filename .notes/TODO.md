@@ -1,3 +1,7 @@
+# Earlier copy review
+
+This checklist preserves an earlier copy review. Use [progress](progress.md) and the [delivery queue](delivery-queue.md) for current task ownership, acceptance and completed work.
+
 # A vision alignment
 Make sure that the current UX/UI of the website generally fits with the values and ideas that are outlined in [VISION.md](./VISION.md).
 

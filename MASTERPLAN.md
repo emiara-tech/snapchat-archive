@@ -18,7 +18,7 @@ This is a hobby project and an experiment in agentic software development. It sh
 8. **Make delivery agentic.** Agents own implementation, technical review, tests, deployment verification, and maintenance. The user sets direction and judges the running experience.
 9. **Do not subsidize production inference.** Paid requests use the connected user's authorized allowance. A development key cannot become a shared production funding source.
 
-The glossary is in [CONTEXT.md](CONTEXT.md). Authentication and AI access follow [auth.md](auth.md). The rendering and AI scene contracts are in [docs/visualization.md](docs/visualization.md). Onboarding and return reminders follow [docs/onboarding.md](docs/onboarding.md); portable bundles and external transfers follow [docs/export-destinations.md](docs/export-destinations.md). This plan defines the product and its delivery gates; temporary experiments and current task status belong in working notes or issues.
+The glossary is in [CONTEXT.md](CONTEXT.md). Authentication and AI access follow [auth.md](auth.md). The rendering and AI scene contracts are in [docs/visualization.md](docs/visualization.md). Onboarding and return reminders follow [docs/onboarding.md](docs/onboarding.md); portable bundles and external transfers follow [docs/export-destinations.md](docs/export-destinations.md). This plan defines the product and its delivery gates. Keep completed outcomes and open tasks in [progress](.notes/progress.md), future-session ideas in [the backlog](.notes/backlog.md), and transient experiments outside durable documentation.
 
 ## Authentication, funding, and agent-native operations
 
@@ -53,9 +53,9 @@ We also judge our engineering process as an agentic development experiment. We r
 
 ## The finished journey
 
-1. A visitor sees a compelling preview of rediscovering their history and can explore a clearly fictional demo immediately. Owners who already have their ZIPs can go straight to import.
+1. A visitor can open their own archive immediately or follow the official request instructions. Every workspace uses the owner’s imported records.
 2. A visitor without an archive follows the official Snapchat My Data request flow. Goodbye Chat explains the wait and how Snapchat will notify them, without collecting their Snapchat password or download link.
-3. While waiting, they can explore the demo, choose what they hope to discover, and optionally arrange a consented email reminder. Returning with the files works without an account; account features and reminders have their own permissions.
+3. While waiting, they can review their request checklist and optionally arrange a consented email reminder. Returning with the files works without an account; account features and reminders have their own permissions.
 4. The owner downloads the export from Snapchat and selects its original ZIPs locally. A spatial import sequence reveals real indexing, linking, and analysis progress as each stage completes.
 5. The app explains coverage and offers a private first reveal: an old photo, a surprising scoped statistic, a recorded participant connection, or an opt-in rediscovery of the owner's own embarrassing words. Every highlight opens its evidence and can be skipped or hidden.
 6. The owner chooses a starting route: rediscover and have fun, understand their history, or curate and take their data elsewhere. All routes enter the same workspace and preserve the current selection.
@@ -73,7 +73,7 @@ The first working slice will be small. The completed journey should feel like on
 
 | Space | Purpose | Essential connections |
 | --- | --- | --- |
-| Arrival and waiting room | Make the promise tangible, guide the export request, and help the visitor return. | Fictional demo, official request flow, consented reminders, local import. |
+| Arrival and waiting room | Make the promise tangible, guide the export request, and help the visitor return. | Official request flow, consented reminders, local import. |
 | Import desk | Establish what evidence is available and open a private workspace. | Original archive, coverage, diagnostics. |
 | First reveal | Offer evidence-based personal highlights and a choice of starting route. | Available media, scoped observations, participant context, hide/skip controls. |
 | Conversations | Reconstruct exchanges with their media in context. | Participants, events, asset links, dates. |
@@ -95,10 +95,12 @@ The existing Vue/Vite application remains the foundation. Hosting is moving to V
 
 Each phase produces a working outcome with an exit gate. We use small vertical slices within phases: a real interaction, its data path, its failure states, and its verification. A phase can have several iterations; a successful demonstration of one fixture does not complete the whole phase.
 
+The detailed acceptance criteria for every phase are indexed in [specs/README.md](.notes/specs/README.md). Delivery follows an implementation, independent review, correction, and re-review loop against those criteria. The manager checks the connected product journey before accepting a slice. External registration and production verification remain separate gates, so local archive work continues while they are pending.
+
 | Phase | Outcome | Depends on |
 | --- | --- | --- |
 | 0 | A dependable delivery and testing foundation. | Existing app and deployment access. |
-| 0.1 | Compelling onboarding, a truthful wait-and-return path, and the first personal reveal. | Phase 0 for the demo/request path; Phase 1 for account-bound reminders; Phases 2, 3, and 7 for real highlights. |
+| 0.1 | Compelling onboarding, a truthful wait-and-return path, and the first personal reveal. | Phase 0 for the request/import path; Phase 1 for account-bound reminders; Phases 2, 3, and 7 for real highlights. |
 | 1 | App identity, user-funded OpenRouter access, and the approved ChatGPT path. | Phase 0, AuthKit access, and provider credentials; ChatGPT also needs OpenAI registration. |
 | 2 | A normalized, traceable dataset with explicit coverage. | Phase 0. |
 | 3 | Evidence-based connections between events, media, and overlays. | Phase 2. |
@@ -112,12 +114,12 @@ Each phase produces a working outcome with an exit gate. We use small vertical s
 | 11 | An assistant that can help explore and curate safely. | Stable query/curation contracts and approved AI access. |
 | 12 | A coherent release, operational checks, and user discovery. | Completed core journeys and verified deployment. |
 
-App authentication, the user-funded OpenRouter path, and the first onboarding slice are immediate priorities. Build the fictional demo and archive request instructions early; add personal highlights as their data contracts become reliable. The optional provider permission to use a ChatGPT plan is tracked independently. Data reconstruction continues while external registrations are pending, because those tasks do not depend on an AI service.
+App authentication, the user-funded OpenRouter path, and the first onboarding slice are immediate priorities. Build real archive import and request instructions early; add personal highlights as their data contracts become reliable. The optional provider permission to use a ChatGPT plan is tracked independently. Data reconstruction continues while external registrations are pending, because those tasks do not depend on an AI service.
 
 ```mermaid
 flowchart TD
     Foundation[0: Delivery foundation] --> Identity[1: App identity and funded AI access]
-    Foundation --> Arrival[0.1: Demo and archive request]
+    Foundation --> Arrival[0.1: Import and archive request]
     Arrival --> Return[Account-free return and import]
     Arrival --> Reminders[Consented reminders]
     Registration[OpenAI website registration] --> ChatGPT[Approved ChatGPT identity and plan path]
@@ -170,15 +172,15 @@ Work:
 
 ## Phase 0.1. Arrival, waiting, and the first reveal
 
-**Owner-visible outcome:** the visitor understands why their archive is worth requesting, enjoys a useful preview while waiting, and returns to an import that reveals something personal before asking them to navigate a large dataset.
+**Owner-visible outcome:** the visitor understands how to request their archive and returns to an import that reveals something personal before asking them to navigate a large dataset.
 
 This work spans the later data phases. Its detailed states, notification boundaries, and verification contract are in [docs/onboarding.md](docs/onboarding.md). The first slice needs no archive, AI request, or destination account.
 
 Work:
 
-- Create a desktop arrival scene with a short, clearly fictional guided demo of connected conversations, old photos, and understandable statistics. Allow immediate import at every entry point.
+- Offer immediate local import and official archive request instructions. Build connected conversations, media and observations against imported owner records.
 - Link to Snapchat's official My Data request page and explain choosing the desired date range and media options. State the current documented delivery expectation without guaranteeing a deadline.
-- Treat departure to Snapchat and return to Goodbye Chat as explicit states. A visitor can mark the request sent, explore the demo, and return when their download arrives.
+- Treat departure to Snapchat and return to Goodbye Chat as explicit states. A visitor can mark the request sent, keep a request checklist, and return when their download arrives.
 - Offer optional reminders with verified recipient ownership and specific consent. Durable waiting must survive process restarts, stop on cancellation/import/account deletion, and bound retries and total sends.
 - A timer sends a truthful reminder to check Snapchat, not a claim that the archive is ready. Add readiness callbacks only after establishing a supported provider contract and authenticating its events.
 - Keep reminder records separate from the archive. Emails and return URLs contain no photos, names of participants, message excerpts, Snapchat download tokens, or private highlights.
@@ -187,7 +189,7 @@ Work:
 - Make embarrassing-message rediscovery opt-in and limited to verified owner-authored text. Offer skip/hide controls and avoid judging a participant's personality or a relationship's quality.
 - Offer rediscovery, self-analysis, and curation/export routes that preserve the same collection and allow switching without another import.
 
-**Early exit gate:** a new visitor can explore a labelled demo, reach the genuine Snapchat request page, understand the waiting state, and return to import. A synthetic reminder flow survives restart and repeated delivery attempts, sends within its consented limit, and stops after cancellation or import.
+**Early exit gate:** a new visitor can open local import or reach the genuine Snapchat request page, understand the waiting state, and return to import. A synthetic reminder flow survives restart and repeated delivery attempts, sends within its consented limit, and stops after cancellation or import.
 
 **Personal reveal exit gate:** a synthetic archive produces independently verified highlights with working evidence links; sparse or missing data produces an honest alternative; skip/hide choices hold across routes. Browser checks show real progress and cancellation, local-only analysis, and no archive content in notification traffic. Waiting and arrival alone do not complete this phase.
 
@@ -465,16 +467,16 @@ Work:
 - Test representative desktop viewports and browser capabilities with documented benchmark environments.
 - Review dependencies, update behavior, error surfaces, rate limits, account isolation, and rollback procedure.
 - Ensure privacy language accurately distinguishes local features from explicitly authorized AI transfers.
-- Create a useful synthetic demo archive and a demo journey that exercises connected conversations, curation, statistics, and a year profile.
+- Verify connected conversations, curation, statistics, and year profiles through actual imports. Synthetic archives are internal automated test fixtures only.
 - Publish honest product descriptions that reflect completed features and supported export cases.
 - Provide a feedback route that helps users report issues without uploading a private archive or posting personal content publicly.
-- Prepare a launch page, demonstration, and small user-discovery experiment after the core journey is ready.
+- Prepare a launch page and small user-discovery experiment after the real core journey is ready.
 - Measure outcomes such as successful import, useful export, understood observation, and completed year-room visit using a disclosed privacy-preserving design.
 - Address feedback in bounded iterations, with regression evidence for confirmed failures.
 
 Outreach is future work. Publishing posts, contacting people, or collecting real user histories requires its own explicit activity and data boundaries.
 
-**Exit gate:** a fresh visitor can finish the supported journey; the deployed revision passes its full checks; documented limitations match reality; operational failures have a verified recovery path; and public demonstrations contain synthetic content.
+**Exit gate:** a fresh visitor can finish the supported journey; the deployed revision passes its full checks; documented limitations match reality; operational failures have a verified recovery path; and public release evidence contains no private archive content.
 
 ## Technical shape
 
@@ -516,7 +518,7 @@ Provider implementations sit behind the documented contracts. Choose concrete li
 
 | Area | Representative cases | Required evidence |
 | --- | --- | --- |
-| Onboarding | No archive, existing archive, return after delay, sparse highlights, skip/hide, cancel import. | Genuine request link, labelled demo, truthful progress, source-backed reveal, all three routes reachable. |
+| Onboarding | No archive, existing archive, return after delay, sparse highlights, skip/hide, cancel import. | Genuine request link, immediate import, truthful progress, source-backed reveal, all three routes reachable. |
 | Reminders | Unverified address, replay, restart, duplicate wake/send, unsubscribe, import, deletion. | Consented bounded delivery; no false readiness claim or post-cancellation send; no archive content in jobs/emails. |
 | Import | Multipart, malformed ZIP/JSON, duplicates, missing sections, excessive resources. | Correct inventory or recoverable failure, responsive UI, no stale session. |
 | Identity | Success, decline, invalid claims, expired/replayed callback, reload, logout, isolated users. | Real sign-in plus meaningful synthetic security checks; ChatGPT approval tested separately. |
@@ -552,7 +554,7 @@ The user should be able to judge progress by using the app and reading a short r
 ## First delivery slices
 
 1. **Deliver account and funding boundaries.** Prepare AuthKit and the per-user OpenRouter connection, verify their supported configuration and key allowance, and track the separate ChatGPT registration gate. No misleading sign-in or owner-funded fallback.
-2. **Make arrival and return work.** Offer a compelling fictional demo, genuine Snapchat export instructions, immediate import, and an optional verified, cancellable reminder. The wait must not leave a visitor with nothing to try.
+2. **Make arrival and return work.** Offer genuine Snapchat export instructions, immediate local import, and an optional verified, cancellable reminder. Preserve a useful request checklist during the wait.
 3. **Connect one complete synthetic conversation.** Text, an attached image, an overlay, a clip, and an unresolved asset all appear with correct source references. Turn supported evidence into the first private reveal.
 4. **Verify real reconstruction privately.** Inspect supported cases in the available test archive without publishing content or silently generalizing unsupported formats.
 5. **Curate and export one year.** A compound filter, an exclusion, undo, and an export preview agree on the selected collection; originals and composed media are verified locally. Extend to a complete bundle and then separately verified destination transfers.

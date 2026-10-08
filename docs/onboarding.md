@@ -2,7 +2,7 @@
 
 Goodbye Chat should earn a return visit before someone has their Snapchat archive. The desktop journey starts with an interactive preview, helps the user request their data, keeps a clear route back while Snapchat prepares it, and reveals personal highlights when the user imports the files. This is a planned product contract. Reminder delivery, export readiness detection, and the proposed highlight experience are not implemented.
 
-The [masterplan](../MASTERPLAN.md), [authentication contract](../auth.md), and [visualization contract](visualization.md) define the wider product. Browsing a demo, requesting a Snapchat export, and importing an archive must remain available without an account or a paid AI connection.
+The [masterplan](../MASTERPLAN.md), [authentication contract](../auth.md), and [visualization contract](visualization.md) define the wider product. Requesting a Snapchat export and importing an archive must remain available without an account or a paid AI connection.
 
 ## What Snapchat supports
 
@@ -20,16 +20,15 @@ The initial product uses Snapchat's email and the user's own confirmation. It mu
 
 | Stage | Planned experience | Completion evidence |
 | --- | --- | --- |
-| Arrive | A short invitation to revisit an old year, follow a friend into a conversation, or take ownership of an archive. Offer "Explore a demo" and "I have my archive" immediately. | The user can try the product without submitting personal data. |
-| Explore | A clearly labeled synthetic archive with a navigable timeline, a photo opening into its conversation, a surprising statistic, and a preview of the imagined past-self room. | Every demo record is synthetic and every unavailable capability is identified. |
+| Arrive | A short invitation to revisit an old year, follow a friend into a conversation, or take ownership of an archive. Offer "Open my archive" and "Request my archive" immediately. | The user can reach local import or the official request guide. |
 | Request | Open the official Snapchat export page, explain the useful categories, media choices, date coverage, and return steps. Keep the guide available in Goodbye Chat. | The user says they submitted a request. Opening the link alone does not establish submission. |
-| Wait | Save a non-sensitive local checklist and chosen next activity. Offer an optional, verified-email reminder at a time the user chooses. Keep the demo and export-status portal accessible. | The UI states that Snapchat's current readiness is unknown. |
+| Wait | Save a non-sensitive local checklist and chosen next activity. Offer an optional, verified-email reminder at a time the user chooses. Keep local import and the export-status portal accessible. | The UI states that Snapchat's current readiness is unknown. |
 | Return | The user chooses "Snapchat emailed me" or "I downloaded my archive." Help them find and download their export on Snapchat before selecting local files. | User-reported readiness remains separate from local file validation. |
 | Import | Validate and parse local files, associate records and media, calculate coverage and exact statistics, then prepare highlights. | Each displayed result belongs to the current validated import revision. |
 | Reveal | Let the user privately discover old photos, evidence-based statistics, conversation connections, and optional embarrassing messages they wrote. | Each highlight opens its source records and can be hidden or skipped. |
 | Continue | Offer "Revisit and play," "Understand my history," and "Curate and export." All use the same archive, filters, exclusions, and media links. | The chosen activity opens with the selected year or records intact. |
 
-The pre-import experience supplies a reason to return without inventing facts about the user. Let the user choose a year they want to revisit, practice a privacy filter on demo records, or inspect what an exported bundle will contain. A saved preference is a navigation choice, not a prediction about their history. Clearly identify any demo conversation or simulated persona.
+The pre-import experience supplies a reason to return without inventing facts about the user. Provide the export-request checklist and explain how to open the returned files locally. A saved preference is a navigation choice, not a prediction about their history.
 
 An existing archive bypasses the wait. A return on another computer shows the onboarding guide and optional account preferences, then asks the user to select their files locally. Account login must not imply that private archive content followed them to that computer. Browser storage can disappear, so the guide remains useful without a remembered checklist.
 
@@ -67,7 +66,7 @@ Use one logical delivery identifier for each consented reminder, with the same p
 
 Version the reminder contract so a deployment can still cancel or complete an older waiting job. Use bounded per-recipient and service-wide send limits, finite job lifetimes, and a visible delivery-failure state. A delayed, duplicated, or out-of-order event must not re-enable consent or create a second active subscription.
 
-Implementation needs server endpoints, a minimal reminder and consent store, a durable timer mechanism, and an email delivery service with a verified sending domain. Provision and inspect these through available APIs and command-line tools, with credentials kept in the repository's secret-management path. Verify the installed workflow package's documentation before using its APIs. A desktop demo and local import can ship before reminder infrastructure is available; the UI must then offer a user-saved return reminder without claiming email delivery.
+Implementation needs server endpoints, a minimal reminder and consent store, a durable timer mechanism, and an email delivery service with a verified sending domain. Provision and inspect these through available APIs and command-line tools, with credentials kept in the repository's secret-management path. Verify the installed workflow package's documentation before using its APIs. Local import and archive browsing can ship before reminder infrastructure is available; the UI must then offer a user-saved return reminder without claiming email delivery.
 
 ## The import reveal
 
@@ -85,7 +84,7 @@ The local reveal costs no model credits. Optional AI interpretation requires a c
 
 ## Completion evidence
 
-- A new user can explore a labeled synthetic demo, open the official export page, save a return choice, and return without an account or private upload.
+- A new user can open local import or the official export page, save a return choice, and return without an account or private upload.
 - The guide distinguishes a full-history export from Memories-only coverage and makes no guaranteed date or readiness claim.
 - A timer, forged callback, duplicated request, older consent revision, or unrelated signed-in account cannot mark an archive ready or trigger unauthorized mail.
 - Reminder tests cover verification, chosen timing, browser closure, process restart, deployment changes, repeated events, send timeouts, bounded retries, bounces, unsubscribe, readiness confirmation, import completion, and account deletion.
@@ -94,4 +93,4 @@ The local reveal costs no model credits. Optional AI interpretation requires a c
 - Every personal highlight resolves to its current local source records. The user can skip it and enter any of the three activities without losing the selected period or exclusions.
 - Service metrics can count consented requests, return visits, import completion, and activity selection without recording names, words, media, or contact relationships. Establish the telemetry consent and retention contract before collecting those metrics.
 
-The first deliverable is the complete demo-to-request-to-local-import journey. Add verified, cancelable reminders after the server and delivery contracts pass their checks. Automatic Snapchat readiness detection remains an external capability to establish before promising it to users.
+The first deliverable is the complete request-to-local-import journey. Add verified, cancelable reminders after the server and delivery contracts pass their checks. Automatic Snapchat readiness detection remains an external capability to establish before promising it to users.

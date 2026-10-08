@@ -19,7 +19,10 @@ export function useMediaRecord(getRecord: () => MediaRecordSource) {
 	let disposed = false;
 
 	function revokeUrl(url: string | null) {
-		if (url) URL.revokeObjectURL(url);
+		if (url) {
+			archiveStore.archiveSession?.reader.releaseMediaUrl(url);
+			URL.revokeObjectURL(url);
+		}
 	}
 
 	function clearBlobUrls() {
@@ -55,7 +58,7 @@ export function useMediaRecord(getRecord: () => MediaRecordSource) {
 					? archiveStore.resolveMediaUrl(record.overlayFilePath)
 					: Promise.resolve(null),
 				geocodeLocation(record.location),
-			]);
+			]).catch(() => [null, null, null] as const);
 
 			if (disposed || cancelled || run !== activeRun) {
 				revokeUrl(mainUrl);

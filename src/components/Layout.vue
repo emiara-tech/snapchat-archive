@@ -1,392 +1,310 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useArchiveStore } from "../stores/archive";
-
+import { useWorkspaceStore } from "../stores/workspace";
 const route = useRoute();
-route.fullPath;
 const router = useRouter();
-const store = useArchiveStore();
-
-const isMobileMenuOpen = ref(false);
-
-// Only active after archive upload
-const archiveNavItems = [
-	{ path: "/photos", label: "Review" },
-	{ path: "/privacy", label: "Privacy" },
-];
-
-const publicNavItems = [{ path: "/privacy", label: "Privacy" }];
-
-const currentYear = new Date().getFullYear();
-const isLandingPage = computed(() => route.path === "/" && !store.isImported);
-const activeNavItems = computed(() =>
-	store.isImported ? archiveNavItems : publicNavItems,
+const archive = useArchiveStore();
+const workspace = useWorkspaceStore();
+const menuOpen = ref(false);
+const hasWorkspace = computed(
+	() => archive.isImported || Boolean(workspace.dataset),
 );
-
-function navigateTo(path: string) {
-	router.push(path);
-	isMobileMenuOpen.value = false;
+const isLandingPage = computed(() => route.path === "/" && !hasWorkspace.value);
+const archiveNav = [
+	{ path: "/welcome", label: "Overview" },
+	{ path: "/conversations", label: "Conversations" },
+	{ path: "/library", label: "Library" },
+	{ path: "/observatory", label: "Observatory" },
+	{ path: "/year-room", label: "Past self" },
+	{ path: "/assistant", label: "Guide" },
+	{ path: "/export", label: "Export" },
+];
+const nav = computed(() =>
+	hasWorkspace.value
+		? archiveNav
+		: [
+				{ path: "/request", label: "Get your archive" },
+				{ path: "/privacy", label: "Privacy" },
+				{ path: "/account", label: "Account" },
+			],
+);
+watch(
+	() => archive.isImported,
+	(current, previous) => {
+		if (previous && !current) workspace.reset();
+	},
+);
+function navigate(path: string) {
+	menuOpen.value = false;
+	void router.push(path);
 }
-
-function resetArchive() {
-	store.resetArchive();
-	navigateTo("/");
+function reset() {
+	workspace.reset();
+	archive.resetArchive();
+	navigate("/");
 }
 </script>
-
 <template>
-	<div class="layout">
+	<div class="layout" :class="{ 'in-workspace': hasWorkspace }">
 		<header class="header" :class="{ transparent: isLandingPage }">
 			<div class="header-inner">
-				<router-link to="/" class="logo">
-					<span class="logo-mark" aria-hidden="true">GC</span>
-					<span class="logo-text">
-						<strong>Goodbye Chat</strong>
-						<small>A proper goodbye</small>
-					</span>
-				</router-link>
-
-				<nav class="nav-desktop">
-					<button
-						v-for="item in activeNavItems"
+				<router-link to="/" class="logo" aria-label="Goodbye Chat home"
+					><span class="logo-mark" aria-hidden="true">✳</span
+					><span class="logo-text"
+						><strong>goodbye<span>chat</span></strong
+						><small>Your life. Still yours.</small></span
+					></router-link
+				>
+				<nav class="nav-desktop" aria-label="Main navigation">
+					<router-link
+						v-for="item in nav"
 						:key="item.path"
+						:to="item.path"
 						class="nav-link"
 						:class="{ active: route.path === item.path }"
-						@click="navigateTo(item.path)"
+						:aria-current="route.path === item.path ? 'page' : undefined"
+						>{{ item.label }}</router-link
 					>
-						{{ item.label }}
-					</button>
 				</nav>
-
 				<div class="header-actions">
-					<button
-						v-if="!store.isImported"
-						class="btn btn-primary btn-sm"
-						@click="navigateTo('/import')"
+					<button v-if="hasWorkspace" class="reset-btn" @click="reset">
+						Start over <span aria-hidden="true">↗</span></button
+					><router-link v-else to="/import" class="btn btn-secondary btn-sm"
+						>Open my archive ↗</router-link
 					>
-						Load a zip
-					</button>
-					<button v-else class="btn btn-secondary btn-sm" @click="resetArchive">
-						Start over
-					</button>
 				</div>
-
 				<button
 					class="mobile-menu-btn"
-					@click="isMobileMenuOpen = !isMobileMenuOpen"
-					:aria-label="isMobileMenuOpen ? 'Close menu' : 'Open menu'"
+					@click="menuOpen = !menuOpen"
+					:aria-label="menuOpen ? 'Close menu' : 'Open menu'"
+					:aria-expanded="menuOpen"
 				>
-					<span class="hamburger" :class="{ open: isMobileMenuOpen }"></span>
+					<span aria-hidden="true">{{ menuOpen ? "×" : "☰" }}</span>
 				</button>
 			</div>
-
-			<Transition name="slide">
-				<nav class="nav-mobile" v-if="isMobileMenuOpen">
-					<button
-						v-for="item in activeNavItems"
-						:key="item.path"
-						class="nav-link"
-						:class="{ active: route.path === item.path }"
-						@click="navigateTo(item.path)"
-					>
-						{{ item.label }}
-					</button>
-					<button
-						v-if="!store.isImported"
-						class="btn btn-primary"
-						@click="navigateTo('/import')"
-					>
-						Open import
-					</button>
-				</nav>
-			</Transition>
+			<nav v-if="menuOpen" class="nav-mobile" aria-label="Compact navigation">
+				<button
+					v-for="item in nav"
+					:key="item.path"
+					@click="navigate(item.path)"
+					class="nav-link"
+				>
+					{{ item.label }}</button
+				><button v-if="hasWorkspace" @click="navigate('/privacy')" class="nav-link">Privacy</button
+				><button @click="navigate('/import')" class="nav-link">
+					Open import
+				</button>
+			</nav>
 		</header>
-
-		<main class="main">
-			<slot />
-		</main>
-
+		<main id="main" class="main"><slot /></main>
 		<footer class="footer">
 			<div class="footer-inner">
-				<div class="footer-brand">
-					<span class="footer-eyebrow">Goodbye Chat</span>
-					<p class="footer-tagline">
-						Review your Snapchat takeout locally, inspect, reflect and export
-						the data you already own.
-					</p>
-					<p class="footer-disclaimer">
-						Independent tool. Not affiliated with, endorsed by, or sponsored by
-						Snap Inc. 
-					</p>
+				<div>
+					<strong>goodbyechat</strong>
+					<p>Keep your history. Choose what comes with you.</p>
+					<small>Independent project. Not affiliated with Snap Inc.</small>
 				</div>
-				<nav class="footer-nav">
-					<router-link to="/privacy">Privacy</router-link>
-					<router-link to="/import">Import</router-link>
+				<nav aria-label="Footer">
+					<router-link to="/privacy">Privacy</router-link
+					><router-link to="/request">Get your archive</router-link
+					><router-link to="/import">Import</router-link>
 				</nav>
-				<p class="footer-copy">
-					{{ currentYear }} · emiara tech
-				</p>
+				<span>Made for a proper goodbye.</span>
 			</div>
 		</footer>
 	</div>
 </template>
-
 <style scoped>
 .layout {
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
 }
-
 .header {
 	position: sticky;
 	top: 0;
 	z-index: 40;
 	backdrop-filter: blur(18px);
-	background: color-mix(in srgb, var(--bg) 86%, transparent);
+	background: color-mix(in srgb, var(--bg) 94%, transparent);
 	border-bottom: 1px solid var(--border);
 }
-
 .header.transparent {
 	position: absolute;
 	width: 100%;
 	background: transparent;
-	border-bottom-color: transparent;
+	border-color: transparent;
 	backdrop-filter: none;
 }
-
 .header-inner {
-	max-width: 1200px;
+	max-width: 1440px;
 	margin: 0 auto;
-	padding: 18px var(--space-lg);
+	padding: 22px 42px;
 	display: flex;
 	align-items: center;
+	gap: 20px;
 	justify-content: space-between;
-	gap: var(--space-md);
 }
-
 .logo {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	color: var(--text-h);
+	gap: 10px;
+	flex-shrink: 0;
 }
-
 .logo-mark {
-	width: 42px;
-	height: 42px;
-	border-radius: 14px;
-	display: grid;
-	place-items: center;
-	font-size: 0.82rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	background: linear-gradient(
-		145deg,
-		var(--accent) 0%,
-		var(--accent-strong) 100%
-	);
-	color: #1c150d;
-	box-shadow: var(--shadow-md);
+	font-size: 2.5rem;
+	color: var(--secondary);
+	line-height: 1;
 }
-
 .logo-text {
-	display: flex;
-	flex-direction: column;
-	line-height: 1.05;
+	display: grid;
+	gap: 2px;
+	line-height: 1.2;
 }
-
 .logo-text strong {
-	font-size: 1rem;
+	font-size: 1.22rem;
+	letter-spacing: -0.065em;
+	font-weight: 700;
 }
-
+.logo-text strong span {
+	font-weight: 400;
+}
 .logo-text small {
 	color: var(--text-soft);
-	font-size: 0.75rem;
+	font-size: 0.63rem;
+	letter-spacing: 0.02em;
 }
-
 .nav-desktop {
 	display: flex;
-	align-items: center;
-	gap: 6px;
+	gap: 3px;
 	margin-left: auto;
+	align-items: center;
 }
-
+.nav-desktop .nav-link {
+	font-size: 0.72rem;
+	border-radius: 4px;
+	padding: 8px 11px;
+}
+.nav-link.active {
+	background: var(--secondary-soft);
+	color: var(--secondary);
+}
 .header-actions {
 	display: flex;
-	align-items: center;
-	gap: 10px;
 }
-
 .btn-sm {
-	padding: 10px 16px;
-	font-size: 0.88rem;
+	padding: 10px 17px;
+	font-size: 0.75rem;
 }
-
+.reset-btn {
+	border: 0;
+	background: none;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 0.72rem;
+	color: var(--text-soft);
+	white-space: nowrap;
+}
+.reset-btn:hover {
+	color: var(--secondary);
+}
 .mobile-menu-btn {
 	display: none;
-	width: 40px;
-	height: 40px;
 	background: none;
-	border: none;
-	align-items: center;
-	justify-content: center;
+	border: 0;
+	color: var(--text);
+	font-size: 1.5rem;
 }
-
-.hamburger {
-	position: relative;
-	width: 20px;
-	height: 2px;
-	background: var(--text-h);
-	transition: all var(--transition-fast);
-}
-
-.hamburger::before,
-.hamburger::after {
-	content: "";
-	position: absolute;
-	left: 0;
-	width: 100%;
-	height: 2px;
-	background: var(--text-h);
-	transition: all var(--transition-fast);
-}
-
-.hamburger::before {
-	top: -6px;
-}
-
-.hamburger::after {
-	bottom: -6px;
-}
-
-.hamburger.open {
-	background: transparent;
-}
-
-.hamburger.open::before {
-	top: 0;
-	transform: rotate(45deg);
-}
-
-.hamburger.open::after {
-	bottom: 0;
-	transform: rotate(-45deg);
-}
-
 .nav-mobile {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	padding: 0 var(--space-lg) var(--space-lg);
+	display: grid;
+	padding: 8px 24px 18px;
 }
-
 .nav-mobile .nav-link {
-	width: 100%;
-	justify-content: flex-start;
-	padding: 12px 14px;
-	font-size: 1rem;
+	text-align: left;
 }
-
 .main {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 }
 
+
+
+
 .footer {
 	border-top: 1px solid var(--border);
-	background:
-		radial-gradient(
-			circle at top left,
-			rgba(243, 203, 69, 0.16),
-			transparent 28%
-		),
-		linear-gradient(180deg, rgba(30, 33, 27, 0.02), rgba(30, 33, 27, 0.08));
+	background: #eee9dd;
 }
-
 .footer-inner {
 	max-width: 1200px;
-	margin: 0 auto;
-	padding: 28px var(--space-lg) 42px;
-	display: grid;
-	grid-template-columns: 1.4fr auto auto;
-	gap: var(--space-lg);
-	align-items: end;
-}
-
-.footer-eyebrow {
-	display: inline-block;
-	margin-bottom: 10px;
-	font-size: 0.8rem;
-	font-weight: 700;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
-	color: var(--text-soft);
-}
-
-.footer-tagline {
-	max-width: 520px;
-	color: var(--text);
-}
-
-.footer-disclaimer {
-	max-width: 560px;
-	margin-top: 10px;
-	color: var(--text-soft);
-	font-size: 0.84rem;
-	line-height: 1.5;
-}
-
-.footer-nav {
+	margin: auto;
+	padding: 35px 24px;
 	display: flex;
-	gap: 14px;
-	flex-wrap: wrap;
-}
-
-.footer-copy {
-	margin: 0;
+	gap: 35px;
+	align-items: center;
+	justify-content: space-between;
 	color: var(--text-soft);
-	font-size: 0.9rem;
-	text-align: right;
+	font-size: 0.74rem;
 }
-
+.footer-inner strong {
+	color: var(--text);
+	font-size: 1rem;
+	letter-spacing: -0.04em;
+}
+.footer-inner p {
+	margin-top: 8px;
+}
+.footer-inner small {
+	display: block;
+	margin-top: 10px;
+	font-size: 0.67rem;
+}
+.footer-inner nav {
+	display: flex;
+	gap: 20px;
+}
+.footer-inner > span {
+	font-family: var(--font-serif);
+	font-style: italic;
+	font-size: 1rem;
+}
+.in-workspace :deep(.page) {
+	padding-top: 54px;
+}
+@media (max-width: 1100px) {
+	.header-inner {
+		padding-inline: 24px;
+		gap: 10px;
+	}
+	.nav-desktop .nav-link {
+		padding-inline: 8px;
+		font-size: 0.68rem;
+	}
+	.logo-text small {
+		display: none;
+	}
+	.header-actions {
+		display: none;
+	}
+}
 @media (max-width: 900px) {
 	.nav-desktop,
 	.header-actions {
 		display: none;
 	}
-
 	.mobile-menu-btn {
-		display: inline-flex;
+		display: block;
 	}
-
-	.footer-inner {
-		grid-template-columns: 1fr;
-		align-items: start;
-	}
-
-	.footer-copy {
-		text-align: left;
-	}
-}
-
-@media (max-width: 640px) {
 	.header-inner {
-		padding: 16px var(--space-md);
+		padding: 18px 24px;
 	}
-
-	.nav-mobile {
-		padding: 0 var(--space-md) var(--space-md);
-	}
-
-	.logo-text small {
-		display: none;
-	}
-
 	.footer-inner {
-		padding: 24px var(--space-md) 36px;
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 18px;
 	}
+
 }
 </style>

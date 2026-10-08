@@ -6,6 +6,9 @@ import {
 	readSnapZipEntryContent,
 	type SnapZipIndex,
 	type SnapZipSource,
+	type SnapZipEntryId,
+	type BuildIndexOptions,
+	assertNotAborted,
 } from "./snapZip";
 import {
 	type ArchiveCapabilities,
@@ -33,34 +36,84 @@ export const SNAP_JSON_PATHS = SNAPCHAT_JSON_PATHS;
 
 export class SnapchatArchiveReader {
 	readonly index: SnapZipIndex;
+	private readonly controller = new AbortController();
+	private readonly urls = new Set<string>();
+	private disposed = false;
 
 	constructor(index: SnapZipIndex) {
 		this.index = index;
 	}
 
 	async readJsonFile<T>(path: string): Promise<T | null> {
-		const entry = findSnapZipEntryByPath(this.index, path);
-		if (!entry) return null;
-		const content = await readSnapZipEntryContent(this.index, entry.id);
-		const buffer = await normalizeContentToArrayBuffer(content);
-		const text = new TextDecoder("utf-8").decode(buffer);
-		return JSON.parse(text) as T;
+		this.assertActive();
+		const entries = this.index.entries.filter((entry) => entry.id.path === path && !entry.isDirectory);
+		if (!entries.length) return null;
+		let result: T | null = null;
+		let previous: string | null = null;
+		for (const entry of entries) {
+			const buffer = await this.readEntry(entry.id, 128 * 1024 * 1024);
+			const text = new TextDecoder("utf-8").decode(buffer);
+			if (previous !== null && previous !== text) throw new DuplicateArchivePathError();
+			result = JSON.parse(text) as T;
+			previous = text;
+		}
+		return result;
 	}
 
 	async readMediaBlob(path: string): Promise<string | null> {
-		const entry = findSnapZipEntryByPath(this.index, path);
-		if (!entry) return null;
-		const content = await readSnapZipEntryContent(this.index, entry.id);
+		this.assertActive();
+		const entries = this.index.entries.filter((entry) => entry.id.path === path && !entry.isDirectory);
+		if (!entries.length) return null;
+		if (entries.length !== 1) throw new DuplicateArchivePathError();
+		return this.readMediaEntry(entries[0]!.id);
+	}
+
+	async readEntry(id: SnapZipEntryId, maxBytes?: number): Promise<ArrayBuffer> {
+		this.assertActive();
+		const content = await readSnapZipEntryContent(this.index, id, { signal: this.controller.signal, maxBytes });
 		const buffer = await normalizeContentToArrayBuffer(content);
-		return URL.createObjectURL(
-			new Blob([buffer], { type: mimeTypeForPath(path) }),
+		this.assertActive();
+		return buffer;
+	}
+
+	async readMediaEntry(id: SnapZipEntryId): Promise<string> {
+		const buffer = await this.readEntry(id);
+		const url = URL.createObjectURL(
+			new Blob([buffer], { type: mimeTypeForPath(id.path) }),
 		);
+		this.urls.add(url);
+		return url;
+	}
+
+	releaseMediaUrl(url: string) {
+		if (this.urls.delete(url)) URL.revokeObjectURL(url);
+	}
+
+	dispose() {
+		if (this.disposed) return;
+		this.disposed = true;
+		this.controller.abort();
+		for (const url of this.urls) URL.revokeObjectURL(url);
+		this.urls.clear();
+	}
+
+	private assertActive() {
+		if (this.disposed) throw new DOMException("The archive was closed.", "AbortError");
+		assertNotAborted(this.controller.signal);
+	}
+}
+
+export class DuplicateArchivePathError extends Error {
+	constructor() {
+		super("This archive contains conflicting file occurrences. Open the inventory to inspect their sources.");
+		this.name = "DuplicateArchivePathError";
 	}
 }
 
 export async function createArchiveSession(
 	files: File[],
 	onProgress?: ArchiveProgressCallback,
+	options?: BuildIndexOptions,
 ): Promise<ArchiveSession> {
 	if (!files.length) {
 		throw new Error("No archive files selected");
@@ -74,17 +127,28 @@ export async function createArchiveSession(
 		id: `source-${index}`,
 		file,
 	}));
-	const index = await buildSnapZipIndex(sources);
+	const index = await buildSnapZipIndex(sources, { ...options, onProgress(completed, total, entries) {
+		onProgress?.(Math.round(completed / total * 60), `Indexed ${completed} of ${total} ZIP parts`);
+		options?.onProgress?.(completed, total, entries);
+	} });
+	assertNotAborted(options?.signal);
 
-	onProgress?.(30, "Reading account metadata");
+	onProgress?.(65, "Reading account metadata");
 	const reader = new SnapchatArchiveReader(index);
-	const account = parseAccountJson(
-		await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.account),
-	);
+	const abort = () => reader.dispose();
+	options?.signal?.addEventListener("abort", abort, { once: true });
+	try {
+	const account = parseAccountJson(await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.account).catch((error: unknown) => {
+		if (error instanceof DuplicateArchivePathError) return null;
+		throw error;
+	}));
 
-	onProgress?.(55, "Reading friends list");
+	onProgress?.(75, "Reading friends list");
 	const friends = parseFriendsJson(
-		await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.friends),
+		await reader.readJsonFile<unknown>(SNAP_JSON_PATHS.friends).catch((error: unknown) => {
+			if (error instanceof DuplicateArchivePathError) return null;
+			throw error;
+		}),
 	);
 	const capabilities = buildArchiveCapabilities(index);
 	const diagnostics = buildArchiveDiagnostics(index);
@@ -103,13 +167,19 @@ export async function createArchiveSession(
 		},
 	};
 
-	onProgress?.(80, "Preparing archive session");
+	onProgress?.(90, "Preparing archive session");
 
 	return {
 		index,
 		reader,
 		metadata,
 	};
+	} catch (error) {
+		reader.dispose();
+		throw error;
+	} finally {
+		options?.signal?.removeEventListener("abort", abort);
+	}
 }
 
 function buildArchiveCapabilities(index: SnapZipIndex): ArchiveCapabilities {
