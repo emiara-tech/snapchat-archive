@@ -1,9 +1,13 @@
 import type { ArchiveSession } from "./snapArchive";
 import { assertNotAborted, isSafeArchivePath, type SnapZipEntryMeta } from "./snapZip";
+import { parseReferenceSlots, resolveOccurrenceLimits, occurrenceUtf8Bytes, occurrenceEncodedBytes, OccurrencePreparationError, knownOccurrenceError, isOccurrenceScalarString, type OccurrencePreparationLimits } from "./datasetOccurrenceFacts";
+export { OccurrencePreparationError } from "./datasetOccurrenceFacts";
+export type { OccurrencePreparationLimits } from "./datasetOccurrenceFacts";
+import type { QueryAssociation, QueryMediaRecord, QuerySource } from "../types/archiveQuery";
 import type {
 	ArchiveDataset, ArchiveCoverage, ArchiveQuery, ConversationEvent, MediaAsset,
 	SourceReference, MediaKind, NormalizedTime, Participant, Conversation,
-	ReviewDecision, MediaLink, UnsupportedEvidence, Authorship,
+	ReviewDecision, MediaLink, UnsupportedEvidence, Authorship, DatasetOccurrenceFact, DatasetEventRowFact, DatasetReferenceDiagnostic,
 } from "../types/dataset";
 
 export const NORMALIZATION_VERSION = 5;
@@ -29,6 +33,7 @@ export interface DatasetInput {
 	revision?: string;
 	/** Computed locally from bounded reads of each complete source ZIP, never from CRC claims. */
 	sourceDigests?: Record<string, string>;
+	occurrenceLimits?: Partial<OccurrencePreparationLimits>;
 }
 
 const SOURCE_FINGERPRINT_CHUNK_BYTES = 1024 * 1024;
@@ -59,13 +64,21 @@ const SECTION_PATHS = {
 	snaps: "json/snap_history.json", memories: "json/memories_history.json", stories: "json/story_history.json",
 };
 
-export async function loadArchiveDataset(session: ArchiveSession, signal?: AbortSignal): Promise<ArchiveDataset> {
+export async function loadArchiveDataset(session: ArchiveSession, signal?: AbortSignal, overrides?: Partial<OccurrencePreparationLimits>): Promise<ArchiveDataset> {
+	const limits = resolveOccurrenceLimits(overrides);
+	const jsonEntries = session.index.entries.filter(entry => !entry.isDirectory && entry.id.path.startsWith("json/") && entry.id.path.endsWith(".json"));
+	let documentBytes = 0;
+	for (const entry of jsonEntries) {
+		if (entry.uncompressedSize > limits.maxDocumentBytes || (documentBytes += entry.uncompressedSize) > limits.maxDocumentsEncodedBytes) throw new OccurrencePreparationError("budget");
+	}
 	const sourceDigests: Record<string, string> = {};
 	for (const source of session.index.sources) sourceDigests[source.id] = await fingerprintArchiveSource(source.file, signal);
 	const documents: DatasetDocument[] = [];
-	for (const entry of session.index.entries.filter((entry) => !entry.isDirectory && entry.id.path.startsWith("json/") && entry.id.path.endsWith(".json"))) {
+	documentBytes = 0;
+	for (const entry of jsonEntries) {
 		assertNotAborted(signal);
-		const bytes = await session.reader.readEntry(entry.id, 128 * 1024 * 1024);
+		const bytes = await session.reader.readEntry(entry.id, limits.maxDocumentBytes);
+		if ((documentBytes += bytes.byteLength) > limits.maxDocumentsEncodedBytes) throw new OccurrencePreparationError("budget");
 		assertNotAborted(signal);
 		const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 		assertNotAborted(signal);
@@ -79,7 +92,7 @@ export async function loadArchiveDataset(session: ArchiveSession, signal?: Abort
 		assertNotAborted(signal);
 		documents.push(document);
 	}
-	const input: DatasetInput = { entries: session.index.entries, documents, sourceDigests };
+	const input: DatasetInput = { entries: session.index.entries, documents, sourceDigests, occurrenceLimits: limits };
 	if (typeof Worker === "undefined") return normalizeArchiveDataset(input);
 	return new Promise((resolve, reject) => {
 		const worker = new Worker(new URL("./dataset.worker.ts", import.meta.url), { type: "module" });
@@ -88,7 +101,7 @@ export async function loadArchiveDataset(session: ArchiveSession, signal?: Abort
 		worker.onmessage = (message: MessageEvent<{ dataset?: ArchiveDataset; error?: string }>) => {
 			cleanup();
 			if (message.data.dataset) resolve(message.data.dataset);
-			else reject(new Error(message.data.error ?? "Could not prepare the local dataset."));
+			else reject(knownOccurrenceError(message.data.error) ?? new Error("Could not prepare the local dataset."));
 		};
 		worker.onerror = () => { cleanup(); reject(new Error("The local analysis worker could not start. Retry in a supported desktop browser.")); };
 		signal?.addEventListener("abort", abort, { once: true });
@@ -142,7 +155,54 @@ function validateDocumentProof(input: DatasetInput): void {
 }
 
 export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
+	const limits = resolveOccurrenceLimits(input.occurrenceLimits);
+	const counts: Partial<Record<keyof OccurrencePreparationLimits, number>> = {};
+	const charge = (key: keyof OccurrencePreparationLimits, amount = 1) => {
+		const next = (counts[key] ?? 0) + amount;
+		if (!Number.isSafeInteger(next) || next > limits[key]) throw new OccurrencePreparationError("budget");
+		counts[key] = next;
+	};
+	const admitLocator = (sourceId: unknown, path: unknown, pointer: unknown = "") => {
+		if (!isOccurrenceScalarString(sourceId, 256) || !sourceId || !isOccurrenceScalarString(path, 4096)
+			|| !path || !isOccurrenceScalarString(pointer, 4096)) throw new OccurrencePreparationError("domain");
+		occurrenceUtf8Bytes(sourceId, limits.maxLocatorBytes);
+		occurrenceUtf8Bytes(path, limits.maxLocatorBytes);
+		occurrenceUtf8Bytes(pointer, limits.maxLocatorBytes);
+		if (!isSafeArchivePath(path)) throw new OccurrencePreparationError("domain");
+	};
+	const locatorField = (object: object, key: "id" | "sourceId" | "path" | "ordinal") => {
+		const descriptor = Object.getOwnPropertyDescriptor(object, key);
+		if (descriptor && !("value" in descriptor)) throw new OccurrencePreparationError("domain");
+		return descriptor?.value;
+	};
+	for (const entry of input.entries) {
+		const id = locatorField(entry, "id");
+		if (!record(id)) throw new OccurrencePreparationError("domain");
+		admitLocator(locatorField(id, "sourceId"), locatorField(id, "path"));
+		locatorField(id, "ordinal");
+	}
+	for (const document of input.documents) {
+		admitLocator(locatorField(document, "sourceId"), locatorField(document, "path"));
+		locatorField(document, "ordinal");
+		const bytes = document.byteLength ?? occurrenceUtf8Bytes(document.text, limits.maxDocumentBytes);
+		if (bytes > limits.maxDocumentBytes) throw new OccurrencePreparationError("budget");
+		charge("maxDocumentsEncodedBytes", bytes);
+	}
 	validateDocumentProof(input);
+	const factsAvailable = input.documents.every(document => document.documentSha256 !== undefined);
+	const encodedFacts = new Map<string, number>();
+	const encodedPopulations = new Map<string, number>();
+	charge("maxFactsBytes", occurrenceEncodedBytes(factsAvailable ? {
+		occurrenceVersion: 1, sources: [], resources: [], occurrences: [], eventRows: [], referenceDiagnostics: [],
+	} : null, limits.maxFactsBytes) + 2); // The complete envelope and compatibility-link array framing.
+	const retainEncodedFact = (population: string, id: string, value: unknown) => {
+		const bytes = occurrenceEncodedBytes(value, limits.maxFactBytes);
+		const key = `${population}:${id}`;
+		const prior = encodedFacts.get(key);
+		charge("maxFactsBytes", bytes - (prior ?? 0) + (population !== "missingAssets" && prior === undefined && (encodedPopulations.get(population) ?? 0) > 0 ? 1 : 0));
+		if (prior === undefined) encodedPopulations.set(population, (encodedPopulations.get(population) ?? 0) + 1);
+		encodedFacts.set(key, bytes);
+	};
 	const coverage: ArchiveCoverage = {
 		sections: {}, missingMedia: 0, unknownAuthors: 0, invalidDates: 0,
 		duplicateRecords: 0, unsupportedRecords: 0, warnings: [],
@@ -239,6 +299,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	const conversations = new Map<string, Conversation>();
 	const scopeProofs = new Map<string, { direct: Map<string, SourceReference[]>; group: SourceReference[] }>();
 	const events = new Map<string, ConversationEvent>();
+	const eventRows = new Map<ConversationEvent, { origin: "chats" | "snaps"; repeatRank: number; rowIndex: number; containerPointer: string; rawMediaType: unknown; hasMediaType: boolean; references: ReturnType<typeof parseReferenceSlots> }>();
 	const eventPartitions = new Map<string, Map<string, ConversationEvent>>();
 	const documentKeys = new Map(parsed.map(({ document }) => [document,
 		canonical([sourceKeys.get(document.sourceId), document.path, document.ordinal, document.documentSha256 ?? stableId("unverified-text", document.text)])]));
@@ -260,6 +321,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 		if (!record(value)) { markInvalid(coverage, section); reject(sourceOf(document), value, "Expected a conversation record."); continue; }
 		if (!Object.keys(value).length) supportedSections.add(section);
 		for (const [threadKey, rows] of Object.entries(value)) {
+			admitLocator(document.sourceId, document.path, `/${pointerEscape(threadKey)}`);
 			if (!Array.isArray(rows)) { markInvalid(coverage, section); reject(sourceOf(document, `/${pointerEscape(threadKey)}`), rows, "Unsupported conversation section."); continue; }
 			if (!rows.length) supportedSections.add(section);
 			const conversationId = stableId("conversation", threadKey);
@@ -278,6 +340,7 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 			const originalRepeats = new Map<string, number>();
 			rows.forEach((row, index) => {
 				const source = sourceOf(document, `/${pointerEscape(threadKey)}/${index}`);
+				admitLocator(source.sourceId, source.path, source.recordPointer);
 				if (!record(row)) { markInvalid(coverage, section); reject(source, row, "A conversation event must be an object."); return; }
 				const from = string(row.From);
 				const kind = normalizeKind(row["Media Type"]);
@@ -285,7 +348,16 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 				if (!from && !text && kind === "unknown" && !row.Created && row["Created(microseconds)"] === undefined) {
 					markInvalid(coverage, section); reject(source, row, "This event has no supported message fields."); return;
 				}
+				if (Object.hasOwn(row, "Created")) occurrenceEncodedBytes(row.Created, limits.maxLiteralBytes);
+				if (Object.hasOwn(row, "Created(microseconds)")) occurrenceEncodedBytes(row["Created(microseconds)"], limits.maxLiteralBytes);
 				const time = normalizeTime(row.Created, row["Created(microseconds)"]);
+				if (Object.hasOwn(row, "Media IDs")) {
+					admitLocator(source.sourceId, source.path, `${source.recordPointer}/Media IDs`);
+					charge("maxReferenceFieldsBytes", occurrenceEncodedBytes(row["Media IDs"], limits.maxReferenceFieldBytes));
+				}
+				const references = parseReferenceSlots(row["Media IDs"], Object.hasOwn(row, "Media IDs"), limits,
+					limits.maxReferencePositions - (counts.maxReferencePositions ?? 0));
+				charge("maxReferencePositions", references.interpretation.sourcePositions ?? 0);
 				const originalSignature = canonical(row);
 				const repeatRank = originalRepeats.get(originalSignature) ?? 0;
 				originalRepeats.set(originalSignature, repeatRank + 1);
@@ -299,7 +371,9 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 				const partition = eventPartitions.get(legacyId) ?? new Map<string, ConversationEvent>();
 				eventPartitions.set(legacyId, partition);
 				const copy = partition.get(logicalKey);
-				if (copy) { copy.sources.push(source); coverage.duplicateRecords += 1; return; }
+				if (copy) { if (copy.sources.length >= limits.maxSourceIdsPerFact) throw new OccurrencePreparationError("budget"); copy.sources.push(source); coverage.duplicateRecords += 1; return; }
+				charge("maxEventRows");
+				charge("maxFactsBytes", occurrenceEncodedBytes(references.slots.map(slot => slot.token), limits.maxFactsBytes));
 				const id = stableId("event", canonical(["event-v5", logicalKey]));
 				const authorship = classifyAuthorship(from, row.IsSender, ownerUsername);
 				const participant = from ? person(from, from, source) : null;
@@ -315,8 +389,10 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 					id, conversationId, participantId: participant?.id ?? null,
 					ownerAuthored: authorship === "owner", authorship, kind, text,
 					timestamp: time.instant, year: yearOf(time), time, source, sources: [source],
-					assetIds: [], mediaReferenceIds: parseMediaReferences(row["Media IDs"]), raw,
+					assetIds: [], mediaReferenceIds: references.slots.map(slot => slot.token), raw,
 				};
+				eventRows.set(event, { origin: section, repeatRank, rowIndex: index, containerPointer: `/${pointerEscape(threadKey)}`,
+					rawMediaType: row["Media Type"], hasMediaType: Object.hasOwn(row, "Media Type"), references });
 				events.set(id, event);
 				partition.set(logicalKey, event);
 				conversation.eventIds.push(id);
@@ -352,8 +428,98 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 		else conversation.scope = { kind: "unknown", recipientId: null, basis: "The archive does not establish direct or complete group membership for this conversation.", evidence: conversation.sources };
 	}
 	const assets = new Map<string, MediaAsset>();
+	const querySources = new Map<string, QuerySource>();
+	const queryResources = new Map<string, QueryMediaRecord>();
+	const occurrenceFacts: DatasetOccurrenceFact[] = [];
+	const rowFacts: DatasetEventRowFact[] = [];
+	const referenceDiagnostics: DatasetReferenceDiagnostic[] = [];
+	const memoryOccurrences = new Map<string, DatasetOccurrenceFact>();
+	const memoryRowsSeen = new Set<string>();
+	const missingTargets = new Map<string, {
+		path: string | null; mediaId: string; sources: Map<string, { source: SourceReference; bytes: number }>;
+		sourceIdMembersBytes: number; sourceMembersBytes: number;
+		rows: Map<string, { legacyId: string; event: ConversationEvent | null; referenceId: string | null; linkPosition: number | null; occurrenceIndex: number | null }>;
+	}>();
+	const sourceSeen = new Set<string>();
+	const diagnosticIndices = new Map<string, number>();
+	const sourceUnion = (prior: readonly string[], added: readonly string[]): string[] => {
+		const unique = new Set<string>();
+		for (const sources of [prior, added]) for (const id of sources) {
+			if (!unique.has(id) && unique.size >= limits.maxSourceIdsPerFact) throw new OccurrencePreparationError("budget");
+			unique.add(id);
+		}
+		return [...unique].sort();
+	};
+	const sourceIdentity = (source: SourceReference) => stableId("source", canonical([source.sourceFingerprint, source.path, source.entryOrdinal, source.recordPointer]));
+	const registerSource = (source: SourceReference): string => {
+		admitLocator(source.sourceId, source.path, source.recordPointer);
+		const id = sourceIdentity(source);
+		if (!sourceSeen.has(id)) { charge("maxSources"); sourceSeen.add(id); }
+		if (factsAvailable) {
+			if (!Number.isSafeInteger(source.entryOrdinal) || source.entryOrdinal! < 0) throw new OccurrencePreparationError("domain");
+			const fact: QuerySource = { id, sourceId: source.sourceId, path: source.path, recordPointer: source.recordPointer,
+				entryOrdinal: source.entryOrdinal!, documentSha256: source.documentSha256 ?? null };
+			retainEncodedFact("sources", id, fact);
+			querySources.set(id, fact);
+		}
+		return id;
+	};
+	const missingTarget = (key: string, path: string | null, mediaId: string, sources: readonly SourceReference[]) => {
+		let target = missingTargets.get(key);
+		if (!target) {
+			charge("maxResources");
+			target = { path, mediaId, sources: new Map(), sourceIdMembersBytes: 0, sourceMembersBytes: 0, rows: new Map() };
+			missingTargets.set(key, target);
+		}
+		for (const source of sources) {
+			const sourceId = sourceIdentity(source);
+			const prior = target.sources.get(sourceId);
+			const separator = !prior && target.sources.size ? 1 : 0;
+			const bytes = occurrenceEncodedBytes(source, limits.maxFactBytes);
+			const sourceIdMembersBytes = target.sourceIdMembersBytes + (prior ? 0 : occurrenceEncodedBytes(sourceId, limits.maxFactBytes) + separator);
+			const sourceMembersBytes = target.sourceMembersBytes - (prior?.bytes ?? 0) + bytes + separator;
+			if (sourceIdMembersBytes > limits.maxFactBytes || sourceMembersBytes > limits.maxFactBytes) throw new OccurrencePreparationError("budget");
+			registerSource(source);
+			target.sourceIdMembersBytes = sourceIdMembersBytes;
+			target.sourceMembersBytes = sourceMembersBytes;
+			target.sources.set(sourceId, { source, bytes });
+		}
+		return target;
+	};
+	const addDiagnostic = (owner: DatasetReferenceDiagnostic["owner"], code: DatasetReferenceDiagnostic["code"], sources: readonly string[], fieldPointer: string | null, ordinal: number | null, rowKey = "") => {
+		if (fieldPointer !== null) {
+			if (!isOccurrenceScalarString(fieldPointer, 4096)) throw new OccurrencePreparationError("domain");
+			occurrenceUtf8Bytes(fieldPointer, limits.maxLocatorBytes);
+		}
+		const id = stableId("diagnostic", canonical([owner, code, fieldPointer, ordinal, rowKey]));
+		const priorIndex = diagnosticIndices.get(id);
+		if (priorIndex === undefined) { charge("maxDiagnostics"); diagnosticIndices.set(id, factsAvailable ? referenceDiagnostics.length : -1); }
+		if (!factsAvailable) return;
+		const prior = priorIndex === undefined ? undefined : referenceDiagnostics[priorIndex];
+		const sourceIds = sourceUnion(prior?.sourceIds ?? [], sources);
+		const diagnostic: DatasetReferenceDiagnostic = { id, code, sourceIds, owner, fieldPointer, referenceOrdinal: ordinal };
+		retainEncodedFact("referenceDiagnostics", id, diagnostic);
+		if (priorIndex === undefined) referenceDiagnostics.push(diagnostic); else referenceDiagnostics[priorIndex] = diagnostic;
+	};
+	const nullableMetadata = (row: Record<string, unknown>, key: string, sourceIds: readonly string[], owner: DatasetReferenceDiagnostic["owner"], rowPointer: string): string | null => {
+		if (!Object.hasOwn(row, key)) return null;
+		const fieldPointer = `${rowPointer}/${pointerEscape(key)}`;
+		if (!isOccurrenceScalarString(fieldPointer, 4096)) throw new OccurrencePreparationError("domain");
+		occurrenceUtf8Bytes(fieldPointer, limits.maxLocatorBytes);
+		const value = row[key];
+		if (typeof value !== "string" || !isOccurrenceScalarString(value)) {
+			addDiagnostic(owner, "unsupported-occurrence-field", sourceIds, fieldPointer, null);
+			return null;
+		}
+		occurrenceUtf8Bytes(value, limits.maxLiteralBytes);
+		if (!value.trim() || sanitizeRaw(value) !== value) return null;
+		return value;
+	};
 	const paths = new Map<string, MediaAsset[]>();
+	const putResource = (resource: QueryMediaRecord) => { retainEncodedFact("resources", resource.id, resource); queryResources.set(resource.id, resource); };
+	const putMemoryOccurrence = (occurrence: DatasetOccurrenceFact) => { retainEncodedFact("occurrences", occurrence.id, occurrence); memoryOccurrences.set(occurrence.id, occurrence); };
 	const addAsset = (asset: MediaAsset) => {
+		if (!asset.available) retainEncodedFact("missingAssets", asset.id, asset);
 		const existing = assets.get(asset.id);
 		if (existing) {
 			existing.sources.push(...asset.sources);
@@ -361,12 +527,17 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 			return;
 		}
 		assets.set(asset.id, asset);
-		if (asset.path) paths.set(asset.path, [...(paths.get(asset.path) ?? []), asset]);
+		if (asset.path) { const matches = paths.get(asset.path); if (matches) matches.push(asset); else paths.set(asset.path, [asset]); }
 	};
 	for (const entry of input.entries.filter((entry) => !entry.isDirectory && !/\.json$/i.test(entry.id.path))) {
+		charge("maxResources");
 		const id = stableId("asset", `${sourceKeys.get(entry.id.sourceId)}:${entry.id.path}:${entry.id.ordinal}`);
 		const source: SourceReference = { sourceId: entry.id.sourceId, sourceFingerprint: sourceKeys.get(entry.id.sourceId), path: entry.id.path, entryOrdinal: entry.id.ordinal, recordPointer: "" };
 		const isOverlay = /-overlay\.[^.]+$/i.test(entry.id.path);
+		const physicalSourceId = registerSource(source);
+		if (factsAvailable) putResource({ id, filename: entry.id.path, kind: kindForPath(entry.id.path), role: isOverlay ? "layer" : "original",
+			available: true, entry: { sourceId: entry.id.sourceId, path: entry.id.path, ordinal: entry.id.ordinal! }, sourceIds: [physicalSourceId],
+			...(isOverlay ? { layerState: "unresolved" as const } : {}) });
 		addAsset({ id, path: entry.id.path, overlayPath: null, kind: kindForPath(entry.id.path),
 			timestamp: null, year: null, source, sources: [source], entryId: entry.id, overlayEntryId: null,
 			conversationIds: [], available: true, mediaId: isOverlay ? null : mediaIdFromPath(entry.id.path),
@@ -375,36 +546,82 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 		});
 		if (kindForPath(entry.id.path) === "unknown") reject(source, { path: entry.id.path }, "This physical file type is unsupported; its exact original remains available.");
 	}
-	for (const { document, value, invalid } of orderedDocs.filter(({ document }) => document.path === SECTION_PATHS.memories)) {
+	for (const parsedDocument of orderedDocs.filter(({ document }) => document.path === SECTION_PATHS.memories)) {
+		const { document, value, invalid } = parsedDocument;
 		if (invalid) continue;
 		if (!record(value) || !Array.isArray(value["Saved Media"])) { markInvalid(coverage, "memories"); reject(sourceOf(document), value, "Unsupported Memories section."); continue; }
 		if (!value["Saved Media"].length) supportedSections.add("memories");
+		const originalRepeats = new Map<string, number>();
 		value["Saved Media"].forEach((row, index) => {
 			const source = sourceOf(document, `/Saved Media/${index}`);
-			if (!record(row)) { markInvalid(coverage, "memories"); reject(source, row, "Memory metadata must be an object."); return; }
-			const kind = normalizeKind(row["Media Type"]);
+			if (!record(row) || !["Date", "Media Type", "Download Link", "Location"].some(field => Object.hasOwn(row, field))) {
+				markInvalid(coverage, "memories"); reject(source, row, "Memory metadata must have a recognized own record field.");
+				addDiagnostic(null, "unsupported-memory-row", [registerSource(source)], null, null, canonical([document.documentSha256 ?? unverifiedDocuments.get(parsedDocument), source.recordPointer]));
+				return;
+			}
+			if (Object.hasOwn(row, "Date")) occurrenceEncodedBytes(row.Date, limits.maxLiteralBytes);
+			const originalSignature = canonical(row);
+			const repeatRank = originalRepeats.get(originalSignature) ?? 0;
+			originalRepeats.set(originalSignature, repeatRank + 1);
+			const occurrenceId = stableId("occurrence", canonical(["occurrence-v1", "memories", document.documentSha256 ?? unverifiedDocuments.get(parsedDocument), document.path, source.recordPointer, repeatRank, 0]));
+			const copyRow = memoryRowsSeen.has(occurrenceId);
+			if (!copyRow) { charge("maxOccurrences"); memoryRowsSeen.add(occurrenceId); }
+			else coverage.duplicateRecords += 1;
+			const ownSourceIds = [registerSource(source)];
+			const owner = { kind: "occurrence" as const, id: occurrenceId };
+			const rawMediaType = nullableMetadata(row, "Media Type", ownSourceIds, owner, source.recordPointer);
+			const location = nullableMetadata(row, "Location", ownSourceIds, owner, source.recordPointer);
+			const kind = normalizeKind(rawMediaType);
 			const time = normalizeTime(row.Date);
-			const mediaId = extractMediaId(row["Download Link"]);
+			if (Object.hasOwn(row, "Download Link")) charge("maxReferenceFieldsBytes", occurrenceEncodedBytes(row["Download Link"], limits.maxReferenceFieldBytes));
+			const mediaId = extractMediaId(row["Download Link"], limits.maxTokenBytes);
 			const date = string(row.Date)?.slice(0, 10);
-			const path = mediaId && date && /^\d{4}-\d{2}-\d{2}$/.test(date)
-				? `memories/${date}_${mediaId}-main.${kind === "video" ? "mp4" : kind === "image" ? "jpg" : "unsupported"}` : null;
+			const path = mediaId && date && /^\d{4}-\d{2}-\d{2}$/.test(date) && (kind === "video" || kind === "image")
+				? `memories/${date}_${mediaId}-main.${kind === "video" ? "mp4" : "jpg"}` : null;
+			if (path !== null) {
+				if (!isOccurrenceScalarString(path, 4096)) throw new OccurrencePreparationError("domain");
+				occurrenceUtf8Bytes(path, limits.maxLocatorBytes);
+			}
 			const candidates = path ? paths.get(path) ?? [] : [];
-			if (!candidates.length) {
-				const id = stableId("missing-asset", canonical([path, mediaId, sanitizeRaw(row)]));
-				if (assets.has(id)) { assets.get(id)!.sources.push(source); coverage.duplicateRecords += 1; }
-				else addAsset({ id, path, overlayPath: null, kind, timestamp: time.instant, year: yearOf(time),
-					source, sources: [source], entryId: null, overlayEntryId: null, conversationIds: [], available: false,
-					mediaId, byteSize: 0, mimeType: mimeForKind(kind, path), location: string(row.Location), raw: sanitizeRaw(row) as Record<string, unknown> });
+			if (candidates.length > limits.maxCandidatesPerOccurrence) throw new OccurrencePreparationError("budget");
+			if (!copyRow) charge("maxAssociationTargets", candidates.length || (mediaId ? 1 : 0));
+			if (factsAvailable) {
+				const sourceId = ownSourceIds[0]!;
+				const id = occurrenceId;
+				const copy = memoryOccurrences.get(id);
+				if ((copy?.sourceIds.length ?? 0) >= limits.maxSourceIdsPerFact) throw new OccurrencePreparationError("budget");
+				const sourceIds = [...(copy?.sourceIds ?? []), sourceId].sort();
+				const originals = candidates.filter(asset => asset.available && asset.role !== "overlay");
+				let association: QueryAssociation = { state: "unlinked", missingMediaId: null, proofSourceIds: sourceIds };
+				if (originals.length === 1) association = { state: "confirmed", mediaId: originals[0]!.id,
+					proof: { kind: "export-exact", sourceIds: sourceUnion([sourceIds[0]!], [registerSource(originals[0]!.source)]) } };
+				else if (originals.length > 1) association = { state: "ambiguous", referenceSourceIds: sourceIds,
+					candidates: originals.map(asset => ({ mediaId: asset.id, proofSourceIds: sourceUnion([sourceIds[0]!], [registerSource(asset.source)]) })) };
+				putMemoryOccurrence({ id, origin: "memories", owningEventId: null, declaredKind: kind === "text" ? "unknown" : kind,
+					caption: null, location, sourceIds, association,
+					identity: { identityVersion: 1, documentSha256: document.documentSha256!, documentPath: document.path,
+						rowPointer: source.recordPointer, repeatRank, referenceOrdinal: 0, copySourceIds: sourceIds },
+					normalizedTime: time, recordedPosition: { containerPointer: "/Saved Media", rowIndex: index }, rawMediaType,
+					reference: mediaId ? { referenceId: null, parserRule: "memory-mid-v1", matchingRule: "memory-date-mid-main-v1",
+						fieldPointer: `${source.recordPointer}/Download Link`, token: mediaId } : null });
+			}
+			if (!candidates.length && mediaId) {
+				const key = canonical([path ? "memory-path" : "memory-mid", path ?? mediaId]);
+				const target = missingTarget(key, path, mediaId, [source]);
+				if (!target.rows.has(occurrenceId)) target.rows.set(occurrenceId, {
+					legacyId: stableId("missing-asset", canonical([path, mediaId, sanitizeRaw(row)])),
+					event: null, referenceId: null, linkPosition: null, occurrenceIndex: null,
+				});
 			} else for (const asset of candidates) {
 				asset.sources.push(source); asset.timestamp = time.instant; asset.year = yearOf(time);
-				asset.mediaId = mediaId; asset.location = string(row.Location); asset.raw = sanitizeRaw(row) as Record<string, unknown>;
+				asset.mediaId = mediaId; asset.location = location; asset.raw = sanitizeRaw(row) as Record<string, unknown>;
 			}
-			coverage.sections.memories!.recordCount += 1;
-			if (!time.valid) coverage.invalidDates += 1;
+			if (!copyRow) { coverage.sections.memories!.recordCount += 1; if (!time.valid) coverage.invalidDates += 1; }
 			if (!path || kind === "unknown") reject(source, row, "No supported local media path can be established for this metadata.");
 		});
 	}
 	for (const asset of assets.values()) {
+		if (!asset.available || asset.role === "overlay") continue;
 		if (!asset.path || !/-main\.[^.]+$/i.test(asset.path)) continue;
 		const overlayPath = asset.path.replace(/-main\.[^.]+$/i, "-overlay.png");
 		const overlays = paths.get(overlayPath) ?? [];
@@ -423,38 +640,118 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 		layer.overlayState = "missing-base";
 		coverage.warnings.push("An overlay has no uniquely available base file. Its exact layer remains in the inventory.");
 	}
+	if (factsAvailable) for (const asset of assets.values()) if (asset.role === "overlay") {
+		const resource = queryResources.get(asset.id)!;
+		putResource({ ...resource, layerState: asset.overlayState === "resolved" ? "resolved" : asset.overlayState === "missing-base" ? "orphan" : "unresolved" });
+	}
 	const links: MediaLink[] = [];
 	const assetsByReference = new Map<string, MediaAsset[]>();
+	const layerReferences = new Set<string>();
 	for (const asset of assets.values()) {
+		if (!asset.available) continue;
 		for (const token of new Set([asset.mediaId, asset.path, filenameStem(asset.path)].filter((value): value is string => value !== null))) {
-			assetsByReference.set(token, [...(assetsByReference.get(token) ?? []), asset]);
+			if (asset.role === "overlay") { layerReferences.add(token); continue; }
+			const matches = assetsByReference.get(token); if (matches) matches.push(asset); else assetsByReference.set(token, [asset]);
 		}
 	}
+	const addLink = (link: MediaLink, position = links.length) => { retainEncodedFact("links", link.id, link); links[position] = link; };
 	for (const event of events.values()) {
-		for (const reference of event.mediaReferenceIds) {
-			const referenceId = stableId("reference", `${event.id}:${reference}`);
+		const row = eventRows.get(event)!;
+		const sourceIds = event.sources.map(registerSource).sort();
+		const identity = factsAvailable ? { identityVersion: 1 as const, documentSha256: event.source.documentSha256!, documentPath: event.source.path,
+			rowPointer: event.source.recordPointer, repeatRank: row.repeatRank, copySourceIds: sourceIds } : null;
+		const recordedPosition = { containerPointer: row.containerPointer, rowIndex: row.rowIndex };
+		if (identity) {
+			const fact: DatasetEventRowFact = { eventId: event.id, origin: row.origin, identity, recordedPosition, references: row.references.interpretation };
+			retainEncodedFact("eventRows", event.id, fact); rowFacts.push(fact);
+		}
+		const eventOwner = { kind: "event" as const, id: event.id };
+		const rawMediaType = nullableMetadata(row.hasMediaType ? { "Media Type": row.rawMediaType } : {}, "Media Type", sourceIds, eventOwner, event.source.recordPointer);
+		if (row.references.interpretation.state === "absent") addDiagnostic(eventOwner, "absent-reference-field", sourceIds, null, null);
+		if (row.references.interpretation.state === "unsupported") addDiagnostic(eventOwner, "unsupported-reference-field", sourceIds, event.source.recordPointer + "/Media IDs", null);
+		for (const ordinal of row.references.malformedOrdinals) addDiagnostic(eventOwner, "malformed-reference-position", sourceIds, event.source.recordPointer + "/Media IDs", ordinal);
+		const tokenCounts = new Map<string, number>();
+		for (const slot of row.references.slots) tokenCounts.set(slot.token, (tokenCounts.get(slot.token) ?? 0) + 1);
+		for (const slot of row.references.slots) {
+			charge("maxOccurrences");
+			const reference = slot.token;
+			const referenceId = tokenCounts.get(reference) === 1 ? stableId("reference", event.id + ":" + reference)
+				: stableId("reference", canonical(["reference-v1", event.id, reference, slot.ordinal]));
+			const occurrenceId = identity ? stableId("occurrence", canonical(["occurrence-v1", row.origin, identity.documentSha256,
+				identity.documentPath, identity.rowPointer, row.repeatRank, slot.ordinal]))
+				: stableId("occurrence", canonical(["unavailable-row-fact", event.id, slot.ordinal]));
+			let association: QueryAssociation | null = identity ? { state: "unlinked", missingMediaId: null, proofSourceIds: sourceIds } : null;
 			const candidates = assetsByReference.get(reference) ?? [];
-			const available = candidates.filter((asset) => asset.available);
-			if (available.length === 1 && candidates.length === 1) {
-				const asset = available[0]!;
-				links.push({ id: stableId("link", `${referenceId}:${asset.id}`), referenceId, eventId: event.id, assetId: asset.id,
+			if (candidates.length > limits.maxCandidatesPerOccurrence) throw new OccurrencePreparationError("budget");
+			charge("maxAssociationTargets", candidates.length > 1 ? candidates.length * candidates.length + candidates.length * 2
+				: candidates.length === 1 ? 2 : layerReferences.has(reference) ? 0 : 2);
+			if (candidates.length === 1) {
+				const asset = candidates[0]!;
+				if (identity) association = { state: "confirmed", mediaId: asset.id, proof: { kind: "export-exact", sourceIds: sourceUnion([sourceIds[0]!], [registerSource(asset.source)]) } };
+				addLink({ id: stableId("link", referenceId + ":" + asset.id), referenceId, eventId: event.id, assetId: asset.id,
 					status: "confirmed", basis: "The event's explicit media identifier matches one local asset.", evidence: [event.source, asset.source], candidateAssetIds: [asset.id] });
 				if (!event.assetIds.includes(asset.id)) event.assetIds.push(asset.id);
 				if (!asset.conversationIds.includes(event.conversationId)) asset.conversationIds.push(event.conversationId);
 				if (!asset.timestamp) { asset.timestamp = event.timestamp; asset.year = event.year; }
 			} else if (candidates.length) {
-				for (const candidate of candidates) links.push({ id: stableId("link", `${referenceId}:${candidate.id}`), referenceId, eventId: event.id, assetId: candidate.id,
-					status: candidates.length > 1 ? "ambiguous" : "unlinked", basis: candidates.length > 1 ? "The explicit reference has several source candidates." : "The event references metadata, but the physical file is missing.",
-					evidence: [event.source, candidate.source], candidateAssetIds: candidates.map((asset) => asset.id), missingReason: available.length ? undefined : "No readable local file is available." });
+				if (identity) association = { state: "ambiguous", referenceSourceIds: sourceIds,
+					candidates: candidates.map(asset => ({ mediaId: asset.id, proofSourceIds: sourceUnion([sourceIds[0]!], [registerSource(asset.source)]) })) };
+				const candidateAssetIds = candidates.map(asset => asset.id);
+				for (const candidate of candidates) addLink({ id: stableId("link", referenceId + ":" + candidate.id), referenceId, eventId: event.id, assetId: candidate.id,
+					status: "ambiguous", basis: "The explicit reference has several source candidates.", evidence: [event.source, candidate.source], candidateAssetIds });
+			} else if (layerReferences.has(reference)) {
+				addDiagnostic({ kind: "occurrence", id: occurrenceId }, "reference-target-is-layer", sourceIds, event.source.recordPointer + "/Media IDs", slot.ordinal);
 			} else {
-				const id = stableId("missing-reference", reference);
-				if (!assets.has(id)) addAsset({ id, path: null, overlayPath: null, kind: event.kind, timestamp: event.timestamp, year: event.year,
-					source: event.source, sources: [event.source], entryId: null, overlayEntryId: null, conversationIds: [event.conversationId],
-					available: false, mediaId: reference, byteSize: 0, mimeType: mimeForKind(event.kind, null), location: null, raw: {} });
-				links.push({ id: stableId("link", `${referenceId}:${id}`), referenceId, eventId: event.id, assetId: id, status: "unlinked",
-					basis: "An explicit media reference has no indexed file.", evidence: [event.source], candidateAssetIds: [], missingReason: "The referenced file is absent from the selected ZIP parts." });
+				const target = missingTarget(canonical(["memory-path", reference]), null, reference, event.sources);
+				target.rows.set(occurrenceId, { legacyId: stableId("missing-reference", reference), event, referenceId,
+					linkPosition: links.length, occurrenceIndex: identity ? occurrenceFacts.length : null });
+				// The occurrence/target counts were admitted above; retain this slot's link position until its target identity is final.
+				links.length += 1;
+			}
+			if (identity && association) {
+				const occurrence: DatasetOccurrenceFact = { id: occurrenceId, origin: row.origin, owningEventId: event.id,
+					declaredKind: normalizeKind(rawMediaType) === "text" ? "unknown" : normalizeKind(rawMediaType), caption: null, location: null, sourceIds,
+					association, identity: { ...identity, referenceOrdinal: slot.ordinal }, normalizedTime: event.time, recordedPosition, rawMediaType,
+					reference: { referenceId, parserRule: row.references.interpretation.parserRule!, matchingRule: "chat-exact-v1", fieldPointer: event.source.recordPointer + "/Media IDs", token: reference } };
+				retainEncodedFact("occurrences", occurrence.id, occurrence); occurrenceFacts.push(occurrence);
 			}
 		}
+	}
+	for (const [key, target] of missingTargets) {
+		const id = target.rows.size === 1 ? target.rows.values().next().value!.legacyId : stableId("missing-media", canonical(["missing-media-v1", key]));
+		const resource: QueryMediaRecord = { id, filename: target.path ?? target.mediaId, kind: "unknown", role: "original", available: false, entry: null, sourceIds: [] };
+		if (occurrenceEncodedBytes(resource, limits.maxFactBytes) + target.sourceIdMembersBytes > limits.maxFactBytes) throw new OccurrencePreparationError("budget");
+		let firstSourceId: string | null = null;
+		for (const sourceId of target.sources.keys()) if (firstSourceId === null || sourceId < firstSourceId) firstSourceId = sourceId;
+		const conversationIds = new Set<string>();
+		let conversationMembersBytes = 0;
+		for (const declaration of target.rows.values()) if (declaration.event && !conversationIds.has(declaration.event.conversationId)) {
+			conversationMembersBytes += occurrenceEncodedBytes(declaration.event.conversationId, limits.maxFactBytes) + (conversationIds.size ? 1 : 0);
+			if (conversationMembersBytes > limits.maxFactBytes) throw new OccurrencePreparationError("budget");
+			conversationIds.add(declaration.event.conversationId);
+		}
+		const asset: MediaAsset = { id, path: target.path, overlayPath: null, kind: "unknown", timestamp: null, year: null,
+			source: target.sources.get(firstSourceId!)!.source, sources: [], entryId: null, overlayEntryId: null, conversationIds: [],
+			available: false, mediaId: target.mediaId, byteSize: 0, mimeType: "application/octet-stream", location: null, raw: {} };
+		if (occurrenceEncodedBytes(asset, limits.maxFactBytes) + target.sourceMembersBytes + conversationMembersBytes > limits.maxFactBytes) throw new OccurrencePreparationError("budget");
+		const sourceIds = [...target.sources.keys()].sort();
+		const sources = sourceIds.map(sourceId => target.sources.get(sourceId)!.source);
+		if (factsAvailable) putResource({ ...resource, sourceIds });
+		for (const [occurrenceId, declaration] of target.rows) {
+			if (factsAvailable) {
+				const occurrence = declaration.occurrenceIndex === null ? memoryOccurrences.get(occurrenceId)! : occurrenceFacts[declaration.occurrenceIndex]!;
+				const corrected: DatasetOccurrenceFact = { ...occurrence, association: { state: "unlinked", missingMediaId: id, proofSourceIds: occurrence.sourceIds } };
+				if (declaration.occurrenceIndex === null) putMemoryOccurrence(corrected);
+				else { retainEncodedFact("occurrences", occurrenceId, corrected); occurrenceFacts[declaration.occurrenceIndex] = corrected; }
+			}
+			if (declaration.event) {
+				const event = declaration.event;
+				const referenceId = declaration.referenceId!;
+				addLink({ id: stableId("link", referenceId + ":" + id), referenceId, eventId: event.id, assetId: id, status: "unlinked",
+					basis: "An explicit media reference has no indexed file.", evidence: [event.source], candidateAssetIds: [], missingReason: "The referenced file is absent from the selected ZIP parts." }, declaration.linkPosition!);
+			}
+		}
+		addAsset({ ...asset, sources, conversationIds: [...conversationIds].sort() });
 	}
 	const sortedEvents = [...events.values()].sort((a, b) => a.time.orderKey.localeCompare(b.time.orderKey) || a.id.localeCompare(b.id));
 	for (const conversation of conversations.values()) conversation.eventIds.sort((a, b) => {
@@ -476,7 +773,10 @@ export function normalizeArchiveDataset(input: DatasetInput): ArchiveDataset {
 	return { fingerprint, identityVerified, revision: input.revision ?? fingerprint, normalizationVersion: NORMALIZATION_VERSION, ownerUsername, timezone: "UTC",
 		participants: [...participants.values()].sort((a, b) => a.id.localeCompare(b.id)), conversations: [...conversations.values()].sort((a, b) => a.id.localeCompare(b.id)),
 		events: sortedEvents, assets: [...assets.values()].sort((a, b) => a.id.localeCompare(b.id)), links, coverage, unsupported,
-		queryEvidence: null, queryEvidenceUnavailableReason: "producer-incomplete" };
+		queryEvidence: null, queryEvidenceUnavailableReason: "producer-incomplete",
+		occurrenceFacts: factsAvailable ? { occurrenceVersion: 1, sources: [...querySources.values()].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+			resources: [...queryResources.values()], occurrences: [...occurrenceFacts, ...memoryOccurrences.values()], eventRows: rowFacts, referenceDiagnostics } : null,
+		occurrenceFactsUnavailableReason: factsAvailable ? null : "missing-document-proof" };
 }
 
 export function normalizeTime(raw: unknown, rawMicroseconds?: unknown): NormalizedTime {
@@ -606,16 +906,24 @@ function mediaIdFromPath(path: string): string | null {
 	const stem = filenameStem(path);
 	return stem?.replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/-(?:main|overlay)$/, "") ?? null;
 }
-function extractMediaId(value: unknown): string | null {
-	if (typeof value !== "string") return null;
-	try { const id = new URL(value).searchParams.get("mid"); return id && isSafeArchivePath(`memories/${id}`) && !id.includes("/") ? id : null; } catch { return null; }
-}
-function parseMediaReferences(value: unknown): string[] {
-	const supported = (item: string) => isSafeArchivePath(item) && !/[?#&<>]/.test(item);
-	if (Array.isArray(value)) return [...new Set(value.filter((item): item is string => typeof item === "string" && supported(item.trim())).map((item) => item.trim()))];
-	if (typeof value !== "string" || !value.trim()) return [];
-	try { const parsed: unknown = JSON.parse(value); if (Array.isArray(parsed)) return parseMediaReferences(parsed); } catch { /* Most exports use a delimited string. */ }
-	return [...new Set(value.split(/[\s,;]+/).map((item) => item.trim()).filter(supported))];
+function extractMediaId(value: unknown, maxTokenBytes: number): string | null {
+	if (!isOccurrenceScalarString(value)) return null;
+	let query: string;
+	try { query = new URL(value).search.slice(1); } catch { return null; }
+	for (let start = 0; start < query.length;) {
+		const end = query.indexOf("&", start), stop = end === -1 ? query.length : end;
+		const equal = query.indexOf("=", start);
+		try {
+			const keyEnd = equal === -1 || equal >= stop ? stop : equal;
+			if (decodeURIComponent(query.slice(start, keyEnd).replace(/\+/g, " ")) === "mid") {
+				const id = decodeURIComponent(query.slice(keyEnd < stop ? keyEnd + 1 : stop, stop).replace(/\+/g, " "));
+				occurrenceUtf8Bytes(id, maxTokenBytes);
+				return id && isOccurrenceScalarString(id) && isSafeArchivePath(`memories/${id}`) && !/[/?#&<>]/.test(id) && sanitizeRaw(id) === id ? id : null;
+			}
+		} catch (error) { if (error instanceof OccurrencePreparationError) throw error; return null; }
+		start = stop + 1;
+	}
+	return null;
 }
 function classifyAuthorship(from: string | null, isSender: unknown, owner: string | null): Authorship {
 	if (!owner || !from) return "unknown";

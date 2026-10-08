@@ -4,7 +4,7 @@ Accepted producer contract after independent design review, distinct correction 
 
 Originating acceptance: [Phase 2](../specs/phase-2.md), [Phase 3](../specs/phase-3.md), [Phase 5](../specs/phase-5.md), [QUERY-01](query-01.md) and its [independent oracle](query-01-oracle.md). [Design acceptance](../reviews/occurrence-01-design.md) records the separate correction/recheck.
 
-Stage 1's byte-proof and row-identity code is accepted at `d88c7b2`. [Stage 2's exact binding](occurrence-01-stage-2.md), [literal oracle](occurrence-01-stage-2-oracle.md) and [binding review](../reviews/occurrence-01-stage-2-binding.md) govern the next serial implementation. Complete QUERY capability and the remaining producer stages stay open.
+Stage 1's byte-proof and row-identity code is accepted at `d88c7b2`. Stage 2's occurrence/reference/missing/candidate code is accepted in [the runtime review](../reviews/occurrence-01-stage-2.md), under [its exact binding](occurrence-01-stage-2.md), [literal oracle](occurrence-01-stage-2-oracle.md) and measured declaring-provenance amendment. The next serial stage binds time and participation contracts. Complete QUERY capability and the remaining producer stages stay open.
 
 ## Value and bounded outcome
 

@@ -4,6 +4,8 @@ This idea is reserved for a separate future session. It is not part of the curre
 
 The revamp should extend through navigation, typography, color, layouts, motion and archive rooms, rather than stopping at the front page. Current engineering must keep domain/query/curation/export/inference logic independent of page components so this session can replace the presentation without rewriting the product's behavior. Separate scene models, motion progression and input policies from Vue rendering. Introduce small interfaces where a real boundary exists; avoid abstractions with only hypothetical uses.
 
+One idea to assess in that session is compact workspace headers after import. The current conversation view spends substantial space on its hero before showing filters and messages. More visible history, persistent scope controls and a clear return path could make daily browsing easier. Assess this with real browsing tasks alongside the cinematic arrival; it is a future design question, not a current implementation requirement.
+
 ## The experience
 
 A detailed closed chest sits in a carefully lit dark space. Brass highlights and the title lead to visible “Open my archive” and “Request my archive” actions. Scrolling brings the camera closer, opens the lid, and releases warm light and abstract ribbons. The ribbons carry the sequence into readable sections about rediscovery, understanding, and preservation. The final section returns to the import/request decision.

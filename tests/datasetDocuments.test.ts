@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { BlobWriter, Uint8ArrayReader, ZipWriter } from "@zip.js/zip.js";
 import { afterEach, expect, it, vi } from "vitest";
-import { loadArchiveDataset, normalizeArchiveDataset, type DatasetInput } from "../src/lib/dataset";
+import { loadArchiveDataset, normalizeArchiveDataset, OccurrencePreparationError, type DatasetInput } from "../src/lib/dataset";
 import { createArchiveSession } from "../src/lib/snapArchive";
 
 const path = "json/chat_history.json";
@@ -172,7 +172,7 @@ it("requires the complete trusted digest, actual byte length and exact non-direc
 		{ documentSha256: undefined }, { documentSha256: "private-proof-canary" }, { documentSha256: sha(bytes).toUpperCase() },
 		{ byteLength: undefined }, { byteLength: bytes.length - 1 }, { byteLength: -1 },
 		{ ordinal: undefined }, { ordinal: 1 }, { ordinal: 0.5 },
-		{ sourceId: "private-source-canary" }, { path: "../private-path-canary.json" },
+		{ sourceId: "private-source-canary" },
 		{ decodingFailure: "invalid-utf8" },
 	];
 	for (const patch of malformed) {
@@ -180,6 +180,9 @@ it("requires the complete trusted digest, actual byte length and exact non-direc
 		Object.assign(input.documents[0]!, patch);
 		expect(() => normalizeArchiveDataset(input)).toThrow(new Error("The original document proof is incomplete or does not match its exact ZIP entry."));
 	}
+	const unsafe = authoredInput([{ sourceId: "one", bytes }]);
+	unsafe.documents[0]!.path = "../private-path-canary.json";
+	expect(() => normalizeArchiveDataset(unsafe)).toThrow(OccurrencePreparationError);
 	const directory = authoredInput([{ sourceId: "one", bytes }]);
 	directory.entries[0]!.isDirectory = true;
 	expect(() => normalizeArchiveDataset(directory)).toThrow(new Error("The original document proof is incomplete or does not match its exact ZIP entry."));

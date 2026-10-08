@@ -16,6 +16,7 @@ import type {
 	ArchiveSession,
 } from "../lib/snapArchive";
 import { createArchiveSession, SNAP_JSON_PATHS } from "../lib/snapArchive";
+import { describeArchiveImportFailure, type ArchiveImportFailure } from "../lib/archiveImportFailure";
 import { computeStats } from "../lib/computeStats";
 import {
 	AnalysisManager,
@@ -63,7 +64,7 @@ export const useArchiveStore = defineStore("archive", () => {
 	const isProcessing = ref(false);
 	const processingProgress = ref(0);
 	const processingStatus = ref("");
-	const importError = ref<string | null>(null);
+	const importError = ref<ArchiveImportFailure | null>(null);
 	const statsError = ref<string | null>(null);
 
 	const friendsList = ref<Friend[]>([]);
@@ -146,8 +147,7 @@ export const useArchiveStore = defineStore("archive", () => {
 		} catch (error) {
 			if (expected !== generation || (error instanceof DOMException && error.name === "AbortError")) throw error;
 			isProcessing.value = false;
-			importError.value =
-				error instanceof Error ? error.message : "Failed to import archive";
+			importError.value = describeArchiveImportFailure(error);
 			throw error;
 		}
 	}

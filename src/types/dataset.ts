@@ -1,5 +1,5 @@
 import type { SnapZipEntryId } from "../lib/snapZip";
-import type { QueryEvidence } from "./archiveQuery";
+import type { QueryDiagnostic, QueryEvidence, QueryMediaRecord, QueryOccurrence, QuerySource } from "./archiveQuery";
 
 export type MediaKind = "text" | "image" | "video" | "audio" | "sticker" | "gif" | "attachment" | "unknown";
 export type LinkState = "confirmed" | "inferred" | "ambiguous" | "unlinked";
@@ -123,6 +123,52 @@ export interface UnsupportedEvidence {
 	raw: unknown;
 }
 
+export interface RecordedRowPosition {
+	readonly containerPointer: string;
+	readonly rowIndex: number;
+}
+
+export type ReferenceParserRule = "array-v1" | "json-array-string-v1" | "delimited-v1";
+export type ReferenceInterpretation =
+	| { readonly state: "absent" | "unsupported"; readonly parserRule: null; readonly sourcePositions: null; readonly knownSupportedSlots: 0; readonly unknownRemainder: true }
+	| { readonly state: "supported"; readonly parserRule: ReferenceParserRule; readonly sourcePositions: number; readonly knownSupportedSlots: number; readonly unknownRemainder: boolean };
+
+export interface DatasetEventRowFact {
+	readonly eventId: string;
+	readonly origin: "chats" | "snaps";
+	readonly identity: Omit<QueryOccurrence["identity"], "referenceOrdinal">;
+	readonly recordedPosition: RecordedRowPosition;
+	readonly references: ReferenceInterpretation;
+}
+
+export type DatasetOccurrenceFact = Omit<QueryOccurrence, "time"> & {
+	readonly normalizedTime: NormalizedTime;
+	readonly recordedPosition: RecordedRowPosition;
+	readonly rawMediaType: string | null;
+	readonly reference: {
+		readonly referenceId: string | null;
+		readonly parserRule: ReferenceParserRule | "memory-mid-v1";
+		readonly matchingRule: "chat-exact-v1" | "memory-date-mid-main-v1";
+		readonly fieldPointer: string;
+		readonly token: string;
+	} | null;
+};
+
+export type DatasetReferenceDiagnostic = Omit<QueryDiagnostic, "code"> & {
+	readonly code: "absent-reference-field" | "unsupported-reference-field" | "malformed-reference-position" | "unknown-occurrence-kind" | "unresolved-memory-reference" | "reference-target-is-layer" | "unsupported-memory-row" | "unsupported-occurrence-field";
+	readonly fieldPointer: string | null;
+	readonly referenceOrdinal: number | null;
+};
+
+export interface DatasetOccurrenceFacts {
+	readonly occurrenceVersion: 1;
+	readonly sources: readonly QuerySource[];
+	readonly resources: readonly QueryMediaRecord[];
+	readonly occurrences: readonly DatasetOccurrenceFact[];
+	readonly eventRows: readonly DatasetEventRowFact[];
+	readonly referenceDiagnostics: readonly DatasetReferenceDiagnostic[];
+}
+
 export interface ArchiveDataset {
 	fingerprint: string;
 	/** True only when source ZIP bytes were fingerprinted, rather than advertised CRC metadata. */
@@ -141,6 +187,9 @@ export interface ArchiveDataset {
 	/** Only a complete producer may publish canonical query evidence. Legacy fixtures omit it. */
 	queryEvidence?: QueryEvidence | null;
 	queryEvidenceUnavailableReason?: "producer-incomplete";
+	/** Staged source-backed facts; exact query time/membership/publication are still unavailable. */
+	occurrenceFacts?: DatasetOccurrenceFacts | null;
+	occurrenceFactsUnavailableReason?: "missing-document-proof" | null;
 }
 
 export interface ArchiveQuery {

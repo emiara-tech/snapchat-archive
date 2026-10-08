@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useArchiveStore } from "../stores/archive";
 import { useRevealStore } from "../stores/reveal";
 const workspace = useWorkspaceStore();
 const archive = useArchiveStore();
 const reveal = useRevealStore();
+const router = useRouter();
 const earliestPhoto = computed(
 	() =>
 		workspace.selectedAssets
@@ -66,6 +68,10 @@ onBeforeUnmount(() => {
 onMounted(() => {
 	if (!workspace.dataset) void workspace.loadFromArchive();
 });
+function chooseDifferentFiles() {
+	archive.resetArchive();
+	router.replace("/import");
+}
 function photoDate(value: string) {
 	return new Intl.DateTimeFormat("en", {
 		dateStyle: "long",
@@ -78,9 +84,19 @@ function photoDate(value: string) {
 		<div class="container reveal-page">
 			<header class="reveal-header">
 				<div>
-					<span class="eyebrow">Privately opened, on your device</span>
-					<h1>Your archive<br />is ready</h1>
-					<p>A little of your history, waiting to be rediscovered.</p>
+					<template v-if="workspace.error">
+						<span class="eyebrow">Private processing on your device</span>
+						<h1>Couldn't open your archive</h1>
+					</template>
+					<template v-else-if="workspace.loading || !workspace.dataset">
+						<span class="eyebrow">Private processing on your device</span>
+						<h1>Opening your archive</h1>
+					</template>
+					<template v-else>
+						<span class="eyebrow">Privately opened, on your device</span>
+						<h1>Your archive<br />is ready</h1>
+						<p>A little of your history, waiting to be rediscovered.</p>
+					</template>
 				</div>
 				<div v-if="workspace.dataset" class="archive-seal">
 					<span>◈</span
@@ -93,6 +109,10 @@ function photoDate(value: string) {
 			</p>
 			<section v-else-if="workspace.error" role="alert" class="card">
 				<p>{{ workspace.error }}</p>
+				<p>Your original ZIP files are unchanged.</p>
+				<button @click="chooseDifferentFiles" class="btn btn-primary">
+					Choose different ZIPs
+				</button>
 				<button @click="workspace.loadFromArchive()" class="btn btn-secondary">
 					Try loading the workspace again
 				</button>

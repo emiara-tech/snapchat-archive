@@ -2,6 +2,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import { defineStore } from "pinia";
 import { useArchiveStore } from "./archive";
 import { DEFAULT_QUERY, loadArchiveDataset, queryDataset } from "../lib/dataset";
+import { describeArchiveImportFailure } from "../lib/archiveImportFailure";
 import type { ArchiveSession } from "../lib/snapArchive";
 import type { ArchiveDataset, ArchiveQuery, ReviewDecision, ReviewStatus, AssociationDecision, MediaLink, MediaAsset } from "../types/dataset";
 
@@ -210,7 +211,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 				install(data); loadedSession = session;
 			} catch (failure) {
 				if (expected !== generation || signal.aborted) return;
-				error.value = failure instanceof Error ? failure.message : "Could not prepare this archive.";
+				error.value = describeArchiveImportFailure(failure).description;
 			} finally {
 				if (expected === generation) { loading.value = false; pendingSession = null; pendingLoad = null; }
 			}
